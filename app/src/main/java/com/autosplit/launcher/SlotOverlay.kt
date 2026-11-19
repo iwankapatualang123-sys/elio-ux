@@ -29,14 +29,20 @@ class SlotOverlay(ctx: Context) : View(ctx) {
     private var sweep: SweepGradient? = null
     private var sweepKey = 0L
 
-    private val thin = maxOf(1.1f, d * 1.15f)
-    private val mid = maxOf(1.7f, d * 1.8f)
+    private val thin = maxOf(1.2f, d * 1.25f)
+    private val mid = maxOf(2.1f, d * 2.2f)
 
     private val framePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
         strokeWidth = thin
         strokeJoin = Paint.Join.ROUND
         strokeCap = Paint.Cap.ROUND
+    }
+    private val outerGlow = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+        strokeWidth = maxOf(5.5f, d * 6f)
+        strokeJoin = Paint.Join.ROUND
+        alpha = 52
     }
     private val accentBar = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
@@ -140,10 +146,27 @@ class SlotOverlay(ctx: Context) : View(ctx) {
         val c2 = if (Pal.alertRed) Color.parseColor("#F97316") else Pal.accent2
         val sg = getSweep(c1, c2)
 
-        // Subtle Luxury Outer Screen Frame
-        val inset = d * 3f
+        // Outer Luxury HD Line Frame: wraps OUTSIDE the top status/signal bar & BELOW the bottom dock!
+        val inset = d * 2.5f
         box.set(inset, inset, width - inset, height - inset)
-        drawLuxuryRect(c, box, 16f * d, c1, c2, sg)
+        val outerR = 16f * d
+        val outerShader = sg ?: LinearGradient(
+            box.left, box.top, box.right, box.bottom,
+            intArrayOf(c1, c2, c1),
+            floatArrayOf(0f, 0.5f, 1f), Shader.TileMode.CLAMP
+        )
+        if (Pal.frameStyle != 3 && !Ambient.lite) {
+            outerGlow.shader = outerShader
+            outerGlow.alpha = if (Pal.frameStyle == 2) 38 else 56
+            c.drawRoundRect(box, outerR, outerR, outerGlow)
+        }
+        accentBar.shader = outerShader
+        accentBar.strokeWidth = when (Pal.frameStyle) {
+            3 -> thin
+            2 -> thin * 1.35f
+            else -> mid
+        }
+        c.drawRoundRect(box, outerR, outerR, accentBar)
 
         if (slots.isEmpty()) return
         getLocationOnScreen(loc)
