@@ -5,58 +5,152 @@
 <link rel="stylesheet" href="elio-speedo.css">
 <link rel="stylesheet" href="autosplit.css">
 <style>
-  /* Clean Luxury WebView Card (no thick double border) */
+  /* Clean Luxury WebView Card */
   .elio-speedo .speedo-card {
     border: 1px solid rgba(255,255,255,0.10) !important;
     box-shadow: none !important;
+    padding: 6px !important;
   }
   .elio-speedo.as-overspeed .speedo-card {
     border-color: rgba(248,113,113,0.65) !important;
     box-shadow: inset 0 0 28px rgba(239,68,68,0.22) !important;
   }
 
-  /* 4 Symmetrical Corner Pods inside every theme's dial stage */
-  .as-stage { position: relative; }
+  /* Android 8.1 WebView-safe Flexbox Layout for all 6 themes */
+  .as-new-theme {
+    display: -webkit-flex; display: flex;
+    -webkit-flex-direction: column; flex-direction: column;
+    -webkit-justify-content: space-between; justify-content: space-between;
+    width: 100%; height: 100%; max-width: 100%;
+    overflow: hidden; box-sizing: border-box;
+    padding: 0 !important;
+  }
+  .as-new-theme.hidden { display: none !important; }
+
+  /* 4 Individual Modern Telemetry Cards (Android 8.1-safe: Flex + Margin, NO CSS gap!) */
+  .as-card-row {
+    display: -webkit-flex; display: flex;
+    -webkit-flex-direction: row; flex-direction: row;
+    width: 100%; flex-shrink: 0; box-sizing: border-box;
+  }
+  .as-mcard {
+    -webkit-flex: 1 1 0; flex: 1 1 0;
+    min-width: 0;
+    margin: 0 2.5px;
+    padding: 4px 3px;
+    text-align: center;
+    box-sizing: border-box;
+    overflow: hidden;
+  }
+  .as-mcard:first-child { margin-left: 0; }
+  .as-mcard:last-child { margin-right: 0; }
+  .as-mcard small {
+    display: block; font-size: 6.5px; letter-spacing: 0.05em;
+    color: #94a3b8; font-weight: 700; line-height: 1.1;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .as-mcard b {
+    display: block; font-size: 9.8px; color: #f8fafc; font-weight: 800;
+    margin-top: 2px; line-height: 1.15;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .as-acc { color: var(--theme-accent) !important; }
+  .as-ok { color: #34d399 !important; }
+  .as-warn { color: #fbbf24 !important; }
+
+  /* Theme-Specific Card Silhouettes (ALL follow var(--theme-accent)!) */
+  .th-lexus .as-mcard {
+    border-radius: 10px;
+    background: linear-gradient(180deg, rgba(20,30,52,0.88), rgba(9,14,26,0.95));
+    border: 1px solid rgba(203,213,225,0.20);
+    border-top: 1.6px solid var(--theme-accent);
+  }
+  .th-bmw .as-mcard {
+    border-radius: 6px;
+    background: linear-gradient(155deg, rgba(16,30,58,0.90), rgba(8,14,28,0.96));
+    border: 1px solid rgba(148,163,184,0.22);
+    border-left: 2.4px solid var(--theme-accent);
+  }
+  .th-mazda .as-mcard {
+    border-radius: 11px;
+    background: linear-gradient(180deg, rgba(22,16,30,0.90), rgba(9,9,16,0.96));
+    border: 1px solid var(--theme-border);
+    border-bottom: 1.6px solid var(--theme-accent);
+  }
+  .th-honda .as-mcard {
+    border-radius: 6px;
+    background: linear-gradient(180deg, rgba(22,20,28,0.94), rgba(10,10,14,0.97));
+    border: 1px solid rgba(255,255,255,0.12);
+    border-top: 2px solid var(--theme-accent);
+  }
+  .th-elio .as-mcard {
+    border-radius: 8px;
+    background: linear-gradient(180deg, rgba(16,26,48,0.86), rgba(8,13,26,0.94));
+    border: 1px solid var(--theme-border);
+    border-top: 1.5px solid var(--theme-accent);
+    padding: 3.5px 3px;
+  }
+  .th-bmwm .as-mcard {
+    border-radius: 7px;
+    background: linear-gradient(180deg, rgba(15,24,44,0.90), rgba(7,12,24,0.96));
+    border: 1px solid rgba(148,163,184,0.22);
+    border-top: 1.6px solid var(--theme-accent);
+    padding: 3.5px 3px;
+  }
+
+  /* Center Stage & 4 Symmetrical Corner Pods */
+  .as-stage {
+    -webkit-flex: 1 1 auto; flex: 1 1 auto;
+    min-height: 0; width: 100%;
+    position: relative;
+    display: -webkit-flex; display: flex;
+    -webkit-align-items: center; align-items: center;
+    -webkit-justify-content: center; justify-content: center;
+    margin: 3px 0;
+  }
+  .as-stage-svg { width: 100%; height: 100%; display: block; }
   .as-pod {
-    position: absolute;
-    z-index: 6;
-    border-radius: 9px;
-    background: rgba(8, 14, 28, 0.84);
+    position: absolute; z-index: 6;
+    border-radius: 8px;
+    background: rgba(8, 14, 28, 0.86);
     border: 1px solid rgba(148, 163, 184, 0.22);
     padding: 3px 6px;
-    pointer-events: none;
-    line-height: 1.1;
+    pointer-events: none; line-height: 1.1;
   }
   .as-pod-tl { top: 2px; left: 2px; }
   .as-pod-tr {
-    top: 2px; right: 2px;
-    padding: 2px;
-    border-radius: 999px;
-    background: rgba(15, 23, 42, 0.92);
-    border: 2.2px solid #ef4444;
-    width: 30px; height: 30px;
-    display: flex; align-items: center; justify-content: center;
+    top: 2px; right: 2px; padding: 0; border-radius: 999px;
+    background: rgba(15, 23, 42, 0.92); border: 2px solid #ef4444;
+    width: 28px; height: 28px;
+    display: -webkit-flex; display: flex;
+    -webkit-align-items: center; align-items: center;
+    -webkit-justify-content: center; justify-content: center;
   }
   .as-pod-tr.limit-off { display: none; }
   .as-pod-tr.limit-hit { background: #dc2626; border-color: #fecaca; box-shadow: 0 0 12px rgba(239,68,68,0.85); }
-  .as-pod-tr span { font-size: 10px; font-weight: 800; color: #f8fafc; font-family: system-ui, sans-serif; }
-
+  .as-pod-tr span { font-size: 9.5px; font-weight: 800; color: #f8fafc; font-family: system-ui, sans-serif; }
   .as-pod-bl {
     bottom: 2px; left: 2px;
-    display: flex; align-items: center; gap: 4px;
-    padding: 3px 7px 3px 4px;
-    border-color: rgba(56, 189, 248, 0.30);
+    display: -webkit-flex; display: flex;
+    -webkit-align-items: center; align-items: center;
+    padding: 3px 6px 3px 4px;
+    border-color: var(--theme-border);
   }
-  .as-pod-br {
-    bottom: 2px; right: 2px;
-    text-align: right;
-    min-width: 66px;
-  }
-  .as-pod small { display: block; font-size: 6.5px; color: #94a3b8; letter-spacing: 0.06em; font-weight: 700; }
-  .as-pod b { display: block; font-size: 9.5px; color: #f8fafc; font-weight: 800; }
-  .as-pod .wx-t { font-size: 11px; font-weight: 800; color: #f8fafc; line-height: 1; }
-  .as-pod .wx-l { font-size: 6.5px; color: #7dd3fc; font-weight: 700; margin-top: 1px; }
+  .as-pod-bl svg { margin-right: 4px; flex-shrink: 0; }
+  .as-pod-br { bottom: 2px; right: 2px; text-align: right; min-width: 60px; }
+  .as-pod small { display: block; font-size: 6px; color: #94a3b8; letter-spacing: 0.06em; font-weight: 700; }
+  .as-pod b { display: block; font-size: 9px; color: #f8fafc; font-weight: 800; }
+  .as-pod .wx-t { font-size: 10.5px; font-weight: 800; color: #f8fafc; line-height: 1; }
+  .as-pod .wx-l { font-size: 6.2px; color: var(--theme-accent); font-weight: 700; margin-top: 1px; }
   .as-high-g { color: #fb923c !important; }
+
+  /* Innova Reborn Car Overlay inside ELIO Neon & BMW M Sport */
+  .as-car-wrap {
+    position: absolute; left: 50%; bottom: 4px;
+    -webkit-transform: translateX(-50%); transform: translateX(-50%);
+    width: 34%; max-width: 118px; pointer-events: none; z-index: 4;
+  }
+  .as-car-img { width: 100%; height: auto; display: block; position: relative; z-index: 2; }
 
   /* Lightweight Android Weather Animations */
   @keyframes wxFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-1.5px); } }
@@ -66,22 +160,6 @@
   .wx-drop2 { animation: wxDrop 1.15s linear 0.4s infinite; }
   .wx-drop3 { animation: wxDrop 1.15s linear 0.78s infinite; }
   .eco-mode .wx-cloud, .eco-mode .wx-drop1, .eco-mode .wx-drop2, .eco-mode .wx-drop3 { animation: none !important; }
-
-  /* Fix right-edge clipping on BMW M Sport & ELIO Neon in narrow 40% column */
-  .as-new-theme { width: 100%; max-width: 100%; overflow: hidden; box-sizing: border-box; }
-  .as-top-chips { width: 100%; box-sizing: border-box; padding: 0 2px; gap: 4px; }
-  .as-chip { min-width: 0; flex: 1 1 0; padding: 4px 6px !important; }
-  .as-chip b, .as-chip small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .as-bmw-m-badge { flex: 0 0 auto; padding: 4px 7px !important; }
-  .as-bmw-metrics { width: 100%; box-sizing: border-box; gap: 4px !important; padding: 0 1px; }
-  .as-bmw-card { min-width: 0; padding: 4px 5px !important; gap: 4px !important; }
-  .as-bmw-card small { font-size: 6.5px !important; }
-  .as-bmw-card b { font-size: 9.5px !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .as-m-ico { width: 14px !important; height: 14px !important; flex-shrink: 0; }
-  .as-sensor-row { width: 100%; box-sizing: border-box; gap: 3px !important; }
-  .as-s-pill { min-width: 0; padding: 4px 3px !important; }
-  .as-s-pill small { font-size: 6.2px !important; }
-  .as-s-pill b { font-size: 9.2px !important; }
 </style>
 </head><body>
 <div class="elio-speedo" data-style="elio">
@@ -92,20 +170,20 @@
     </div>
 
     <!-- =====================================================================
-         STYLE 0: LEXUS F-SPORT HD (LANDSCAPE TOP & BOTTOM BARS + FULL-PRESS DIAL)
+         STYLE 0: LEXUS F-SPORT HD (4 KARTU TITANIUM ATAS & BAWAH)
          ===================================================================== -->
-    <div id="cluster_lfa" class="hidden as-new-theme as-classic-hd">
-      <div class="as-hbar">
-        <div class="as-hcell"><small>TRIP A</small><b><span class="live-trip-km">0.0</span> km</b></div>
-        <div class="as-hcell"><small>KEC. MAKS</small><b class="as-c-acc"><span class="live-max">0</span></b></div>
-        <div class="as-hcell"><small>RATA-RATA</small><b><span class="live-avg">0</span></b></div>
-        <div class="as-hcell"><small>SATELIT</small><b class="live-sat-badge as-warn">⚠ NO SAT</b></div>
+    <div id="cluster_lfa" class="hidden as-new-theme th-lexus">
+      <div class="as-card-row">
+        <div class="as-mcard"><small>TRIP A</small><b><span class="live-trip-km">0.0</span> km</b></div>
+        <div class="as-mcard"><small>KEC. MAKS</small><b class="as-acc"><span class="live-max">0</span></b></div>
+        <div class="as-mcard"><small>RATA-RATA</small><b><span class="live-avg">0</span></b></div>
+        <div class="as-mcard"><small>SATELIT</small><b class="live-sat-badge as-warn">⚠ NO SAT</b></div>
       </div>
 
       <div class="as-stage">
         <div class="as-pod as-pod-tl"><small>TANJAKAN</small><b class="live-inc">+0° · 0°</b></div>
         <div class="as-pod as-pod-tr live-limit-pod"><span class="live-limit-val">100</span></div>
-        <div class="as-pod as-pod-bl"><svg class="live-wx-svg" width="26" height="24" viewBox="0 0 36 32"></svg><div><div class="wx-t live-wx-temp">--°</div><div class="wx-l live-wx-lbl">Cuaca</div></div></div>
+        <div class="as-pod as-pod-bl"><svg class="live-wx-svg" width="24" height="22" viewBox="0 0 36 32"></svg><div><div class="wx-t live-wx-temp">--°</div><div class="wx-l live-wx-lbl">Cuaca</div></div></div>
         <div class="as-pod as-pod-br"><small>WAKTU JALAN</small><b class="live-time">0:00:00</b></div>
 
         <svg class="as-stage-svg" viewBox="0 0 280 248" preserveAspectRatio="xMidYMid meet">
@@ -114,7 +192,7 @@
               <stop offset="0%" stop-color="#f1f5f9"/><stop offset="50%" stop-color="#475569"/><stop offset="100%" stop-color="#cbd5e1"/>
             </linearGradient>
             <linearGradient id="lfaHalo" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stop-color="var(--theme-accent)"/><stop offset="60%" stop-color="#3b82f6"/><stop offset="100%" stop-color="#f43f5e"/>
+              <stop offset="0%" stop-color="var(--theme-accent)"/><stop offset="100%" stop-color="var(--theme-accent-2)"/>
             </linearGradient>
             <radialGradient id="lfaBg" cx="50%" cy="46%" r="54%">
               <stop offset="0%" stop-color="#132347" stop-opacity="0.72"/><stop offset="72%" stop-color="#070d1c" stop-opacity="0.95"/><stop offset="100%" stop-color="#03060f"/>
@@ -128,7 +206,7 @@
           <g id="lfaTicks" stroke="#cbd5e1" stroke-linecap="round"></g>
           <g id="lfaNums" fill="#94a3b8" font-size="9.5" font-weight="700" text-anchor="middle"></g>
           <g id="lfaNeedle" transform="rotate(-135 140 124)">
-            <polygon points="138,124 142,124 140.8,34 139.2,34" fill="#ff2a4b"/>
+            <polygon points="138,124 142,124 140.8,34 139.2,34" fill="var(--theme-accent)"/>
             <circle cx="140" cy="124" r="10" fill="#1e293b" stroke="#94a3b8" stroke-width="1.6"/>
           </g>
           <circle cx="140" cy="124" r="56" fill="#060b16" stroke="rgba(148,163,184,0.22)" stroke-width="1.2"/>
@@ -138,108 +216,104 @@
         </svg>
       </div>
 
-      <div class="as-hbar">
-        <div class="as-hcell"><small>KETINGGIAN</small><b class="as-c-acc"><span class="live-alt-num">--</span> m</b></div>
-        <div class="as-hcell"><small>KOMPAS</small><b class="live-heading-val">--</b></div>
-        <div class="as-hcell"><small>G-FORCE</small><b id="lfaGDisplay" class="as-c-acc">0.00G</b></div>
-        <div class="as-hcell"><small>SUHU BAT</small><b><span class="live-btemp">--</span>°C</b></div>
+      <div class="as-card-row">
+        <div class="as-mcard"><small>MDPL</small><b class="as-acc"><span class="live-alt-num">--</span> m</b></div>
+        <div class="as-mcard"><small>KOMPAS</small><b class="live-heading-val">--</b></div>
+        <div class="as-mcard"><small>G-FORCE</small><b id="lfaGDisplay" class="as-acc">0.00G</b></div>
+        <div class="as-mcard"><small>SUHU BAT</small><b><span class="live-btemp">--</span>°C</b></div>
       </div>
     </div>
 
     <!-- =====================================================================
-         STYLE 1: BMW G-SERIES (iDRIVE 8 LIVE COCKPIT PRO HD — SLANTED BARS)
+         STYLE 1: BMW G-SERIES (iDRIVE 8 HD — 4 KARTU SAPPHIRE SPORT)
          ===================================================================== -->
-    <div id="cluster_m3" class="hidden as-new-theme as-classic-hd">
-      <div class="as-hbar">
-        <div class="as-hcell"><small>TRIP A</small><b><span class="live-trip-km">0.0</span> km</b></div>
-        <div class="as-hcell"><small>KEC. MAKS</small><b class="as-c-acc"><span class="live-max">0</span></b></div>
-        <div class="as-hcell"><small>RATA-RATA</small><b><span class="live-avg">0</span></b></div>
-        <div class="as-hcell"><small>SATELIT</small><b class="live-sat-badge as-warn">⚠ NO SAT</b></div>
+    <div id="cluster_m3" class="hidden as-new-theme th-bmw">
+      <div class="as-card-row">
+        <div class="as-mcard"><small>TRIP A</small><b><span class="live-trip-km">0.0</span> km</b></div>
+        <div class="as-mcard"><small>KEC. MAKS</small><b class="as-acc"><span class="live-max">0</span></b></div>
+        <div class="as-mcard"><small>RATA-RATA</small><b><span class="live-avg">0</span></b></div>
+        <div class="as-mcard"><small>SATELIT</small><b class="live-sat-badge as-warn">⚠ NO SAT</b></div>
       </div>
 
       <div class="as-stage">
         <div class="as-pod as-pod-tl"><small>TANJAKAN</small><b class="live-inc">+0° · 0°</b></div>
         <div class="as-pod as-pod-tr live-limit-pod"><span class="live-limit-val">100</span></div>
-        <div class="as-pod as-pod-bl"><svg class="live-wx-svg" width="26" height="24" viewBox="0 0 36 32"></svg><div><div class="wx-t live-wx-temp">--°</div><div class="wx-l live-wx-lbl">Cuaca</div></div></div>
+        <div class="as-pod as-pod-bl"><svg class="live-wx-svg" width="24" height="22" viewBox="0 0 36 32"></svg><div><div class="wx-t live-wx-temp">--°</div><div class="wx-l live-wx-lbl">Cuaca</div></div></div>
         <div class="as-pod as-pod-br"><small>WAKTU JALAN</small><b class="live-time">0:00:00</b></div>
 
         <svg class="as-stage-svg" viewBox="0 0 280 248" preserveAspectRatio="xMidYMid meet">
           <defs>
-            <linearGradient id="gSerBlue" x1="0" y1="1" x2="0" y2="0">
-              <stop offset="0%" stop-color="#0284c7" stop-opacity="0.30"/>
-              <stop offset="65%" stop-color="#38bdf8" stop-opacity="0.95"/>
-              <stop offset="100%" stop-color="#e0f2fe" stop-opacity="1"/>
+            <linearGradient id="gSerL" x1="0" y1="1" x2="0" y2="0">
+              <stop offset="0%" stop-color="var(--theme-accent)" stop-opacity="0.28"/>
+              <stop offset="70%" stop-color="var(--theme-accent)" stop-opacity="0.95"/>
+              <stop offset="100%" stop-color="#ffffff" stop-opacity="1"/>
             </linearGradient>
-            <linearGradient id="gSerRed" x1="0" y1="1" x2="0" y2="0">
-              <stop offset="0%" stop-color="#991b1b" stop-opacity="0.30"/>
-              <stop offset="65%" stop-color="#ef4444" stop-opacity="0.95"/>
-              <stop offset="100%" stop-color="#fecaca" stop-opacity="1"/>
+            <linearGradient id="gSerR" x1="0" y1="1" x2="0" y2="0">
+              <stop offset="0%" stop-color="var(--theme-accent-2)" stop-opacity="0.28"/>
+              <stop offset="70%" stop-color="var(--theme-accent-2)" stop-opacity="0.95"/>
+              <stop offset="100%" stop-color="#ffffff" stop-opacity="1"/>
             </linearGradient>
             <clipPath id="clipGSerL"><polygon points="14,204 54,44 82,44 42,204"/></clipPath>
             <clipPath id="clipGSerR"><polygon points="266,204 226,44 198,44 238,204"/></clipPath>
           </defs>
 
-          <!-- BMW G-Series Slanted Parallel Bars (Distinct from M Sport Chevrons!) -->
-          <polygon points="14,204 54,44 82,44 42,204" fill="rgba(56,189,248,0.10)" stroke="rgba(56,189,248,0.32)" stroke-width="1"/>
+          <polygon points="14,204 54,44 82,44 42,204" fill="rgba(255,255,255,0.06)" stroke="var(--theme-border)" stroke-width="1"/>
           <g clip-path="url(#clipGSerL)">
-            <rect id="m3LFill" x="10" y="204" width="76" height="0" fill="url(#gSerBlue)"/>
+            <rect id="m3LFill" x="10" y="204" width="76" height="0" fill="url(#gSerL)"/>
             <rect id="m3LCap" x="10" y="204" width="76" height="4" fill="#ffffff" opacity="0"/>
           </g>
           <line x1="10" y1="204" x2="50" y2="44" stroke="var(--theme-accent)" stroke-width="5" opacity="0.26"/>
           <line x1="10" y1="204" x2="50" y2="44" stroke="var(--theme-accent)" stroke-width="2" opacity="0.95"/>
 
-          <polygon points="266,204 226,44 198,44 238,204" fill="rgba(239,68,68,0.10)" stroke="rgba(239,68,68,0.32)" stroke-width="1"/>
+          <polygon points="266,204 226,44 198,44 238,204" fill="rgba(255,255,255,0.06)" stroke="var(--theme-border)" stroke-width="1"/>
           <g clip-path="url(#clipGSerR)">
-            <rect id="m3RFill" x="194" y="204" width="76" height="0" fill="url(#gSerRed)"/>
-            <rect id="m3RCap" x="194" y="204" width="76" height="4" fill="#ffe4e6" opacity="0"/>
+            <rect id="m3RFill" x="194" y="204" width="76" height="0" fill="url(#gSerR)"/>
+            <rect id="m3RCap" x="194" y="204" width="76" height="4" fill="#ffffff" opacity="0"/>
           </g>
-          <line x1="270" y1="204" x2="230" y2="44" stroke="var(--theme-accent)" stroke-width="5" opacity="0.26"/>
-          <line x1="270" y1="204" x2="230" y2="44" stroke="var(--theme-accent)" stroke-width="2" opacity="0.95"/>
+          <line x1="270" y1="204" x2="230" y2="44" stroke="var(--theme-accent-2)" stroke-width="5" opacity="0.26"/>
+          <line x1="270" y1="204" x2="230" y2="44" stroke="var(--theme-accent-2)" stroke-width="2" opacity="0.95"/>
 
-          <!-- Slanted ///M Signature Stripes -->
           <g transform="translate(115,24) skewX(-18)">
             <rect x="0" y="0" width="13" height="6" rx="1" fill="#38bdf8"/>
             <rect x="17" y="0" width="13" height="6" rx="1" fill="#2563eb"/>
             <rect x="34" y="0" width="13" height="6" rx="1" fill="#e11d48"/>
           </g>
 
-          <!-- Center Frameless iDrive 8 Speed Readout -->
           <text id="speedDisplay" class="live-spd-num" x="140" y="128" text-anchor="middle" fill="#ffffff" font-size="76" font-weight="900" font-style="italic" letter-spacing="-3">0</text>
-          <text class="as-unit-label" x="140" y="150" text-anchor="middle" fill="#7dd3fc" font-size="11" font-weight="800" letter-spacing="3">KM/H</text>
-          <text x="140" y="166" text-anchor="middle" fill="#64748b" font-size="7.5" font-weight="800" letter-spacing="2">BMW G-SERIES</text>
+          <text class="as-unit-label" x="140" y="150" text-anchor="middle" fill="var(--theme-accent)" font-size="11" font-weight="800" letter-spacing="3">KM/H</text>
+          <text x="140" y="166" text-anchor="middle" fill="#94a3b8" font-size="7.5" font-weight="800" letter-spacing="2">BMW G-SERIES</text>
 
-          <!-- Live G-Force Bullseye Radar -->
-          <circle cx="140" cy="196" r="22" fill="rgba(15,23,42,0.85)" stroke="rgba(56,189,248,0.42)" stroke-width="1.2"/>
+          <circle cx="140" cy="196" r="22" fill="rgba(15,23,42,0.85)" stroke="var(--theme-border)" stroke-width="1.2"/>
           <circle cx="140" cy="196" r="11" fill="none" stroke="rgba(148,163,184,0.22)" stroke-width="1"/>
           <line x1="118" y1="196" x2="162" y2="196" stroke="rgba(148,163,184,0.22)" stroke-width="1"/>
           <line x1="140" y1="174" x2="140" y2="218" stroke="rgba(148,163,184,0.22)" stroke-width="1"/>
-          <circle id="m3GDot" cx="140" cy="196" r="4.5" fill="#f43f5e" stroke="#ffffff" stroke-width="1.3"/>
+          <circle id="m3GDot" cx="140" cy="196" r="4.5" fill="var(--theme-accent)" stroke="#ffffff" stroke-width="1.3"/>
         </svg>
       </div>
 
-      <div class="as-hbar">
-        <div class="as-hcell"><small>KETINGGIAN</small><b class="as-c-acc"><span class="live-alt-num">--</span> m</b></div>
-        <div class="as-hcell"><small>KOMPAS</small><b class="live-heading-val">--</b></div>
-        <div class="as-hcell"><small>G-FORCE</small><b id="gScoreDisplay" class="as-c-acc">0.00G</b></div>
-        <div class="as-hcell"><small>SUHU BAT</small><b><span class="live-btemp">--</span>°C</b></div>
+      <div class="as-card-row">
+        <div class="as-mcard"><small>MDPL</small><b class="as-acc"><span class="live-alt-num">--</span> m</b></div>
+        <div class="as-mcard"><small>KOMPAS</small><b class="live-heading-val">--</b></div>
+        <div class="as-mcard"><small>G-FORCE</small><b id="gScoreDisplay" class="as-acc">0.00G</b></div>
+        <div class="as-mcard"><small>SUHU BAT</small><b><span class="live-btemp">--</span>°C</b></div>
       </div>
     </div>
 
     <!-- =====================================================================
-         STYLE 2: MAZDA KODO HD (SOUL RED CHRONOGRAPH + FULL-PRESS DIAL)
+         STYLE 2: MAZDA KODO HD (IKUT WARNA TEMA UTAMA + 4 KARTU TERPISAH)
          ===================================================================== -->
-    <div id="cluster_mazda" class="hidden as-new-theme as-classic-hd">
-      <div class="as-hbar">
-        <div class="as-hcell"><small>TRIP A</small><b><span class="live-trip-km">0.0</span> km</b></div>
-        <div class="as-hcell"><small>KEC. MAKS</small><b class="as-c-red"><span class="live-max">0</span></b></div>
-        <div class="as-hcell"><small>RATA-RATA</small><b><span class="live-avg">0</span></b></div>
-        <div class="as-hcell"><small>SATELIT</small><b class="live-sat-badge as-warn">⚠ NO SAT</b></div>
+    <div id="cluster_mazda" class="hidden as-new-theme th-mazda">
+      <div class="as-card-row">
+        <div class="as-mcard"><small>TRIP A</small><b><span class="live-trip-km">0.0</span> km</b></div>
+        <div class="as-mcard"><small>KEC. MAKS</small><b class="as-acc"><span class="live-max">0</span></b></div>
+        <div class="as-mcard"><small>RATA-RATA</small><b><span class="live-avg">0</span></b></div>
+        <div class="as-mcard"><small>SATELIT</small><b class="live-sat-badge as-warn">⚠ NO SAT</b></div>
       </div>
 
       <div class="as-stage">
         <div class="as-pod as-pod-tl"><small>TANJAKAN</small><b class="live-inc">+0° · 0°</b></div>
         <div class="as-pod as-pod-tr live-limit-pod"><span class="live-limit-val">100</span></div>
-        <div class="as-pod as-pod-bl"><svg class="live-wx-svg" width="26" height="24" viewBox="0 0 36 32"></svg><div><div class="wx-t live-wx-temp">--°</div><div class="wx-l live-wx-lbl">Cuaca</div></div></div>
+        <div class="as-pod as-pod-bl"><svg class="live-wx-svg" width="24" height="22" viewBox="0 0 36 32"></svg><div><div class="wx-t live-wx-temp">--°</div><div class="wx-l live-wx-lbl">Cuaca</div></div></div>
         <div class="as-pod as-pod-br"><small>WAKTU JALAN</small><b class="live-time">0:00:00</b></div>
 
         <svg class="as-stage-svg" viewBox="0 0 280 248" preserveAspectRatio="xMidYMid meet">
@@ -248,261 +322,219 @@
               <stop offset="0%" stop-color="#f8fafc"/><stop offset="45%" stop-color="#64748b"/><stop offset="100%" stop-color="#e2e8f0"/>
             </linearGradient>
             <radialGradient id="mzFace" cx="50%" cy="44%" r="55%">
-              <stop offset="0%" stop-color="#220a14"/><stop offset="68%" stop-color="#0b0811"/><stop offset="100%" stop-color="#050509"/>
+              <stop offset="0%" stop-color="#141a2e"/><stop offset="68%" stop-color="#090c16"/><stop offset="100%" stop-color="#05060c"/>
             </radialGradient>
-            <linearGradient id="mzRedArc" x1="0" y1="1" x2="1" y2="0">
-              <stop offset="0%" stop-color="#fb7185"/><stop offset="60%" stop-color="#e11d48"/><stop offset="100%" stop-color="#9f1239"/>
+            <linearGradient id="mzThemeArc" x1="0" y1="1" x2="1" y2="0">
+              <stop offset="0%" stop-color="var(--theme-accent)"/><stop offset="100%" stop-color="var(--theme-accent-2)"/>
             </linearGradient>
           </defs>
           <circle cx="140" cy="124" r="113" fill="url(#mzFace)" stroke="url(#mzChrome)" stroke-width="3.6"/>
           <circle cx="140" cy="124" r="103" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="7"/>
-          <circle id="mazdaHaloArc" cx="140" cy="124" r="103" fill="none" stroke="url(#mzRedArc)" stroke-width="7" stroke-linecap="round"
+          <circle id="mazdaHaloArc" cx="140" cy="124" r="103" fill="none" stroke="url(#mzThemeArc)" stroke-width="7" stroke-linecap="round"
                   stroke-dasharray="485 650" stroke-dashoffset="485" transform="rotate(135 140 124)"/>
           <g id="mazdaTicks" stroke="#cbd5e1" stroke-linecap="round"></g>
           <g id="mazdaNums" fill="#cbd5e1" font-size="9.5" font-weight="700" text-anchor="middle"></g>
           <g id="mazdaNeedle" transform="rotate(-135 140 124)">
-            <polygon points="137.8,124 142.2,124 140.6,28 139.4,28" fill="#f43f5e"/>
+            <polygon points="137.8,124 142.2,124 140.6,28 139.4,28" fill="var(--theme-accent)"/>
             <circle cx="140" cy="124" r="12" fill="#0f172a" stroke="#e2e8f0" stroke-width="2"/>
-            <circle cx="140" cy="124" r="4" fill="#f43f5e"/>
+            <circle cx="140" cy="124" r="4" fill="var(--theme-accent)"/>
           </g>
-          <circle cx="140" cy="124" r="47" fill="#09070d" stroke="rgba(244,63,94,0.34)" stroke-width="1.2"/>
+          <circle cx="140" cy="124" r="47" fill="#080a12" stroke="var(--theme-border)" stroke-width="1.2"/>
           <text id="mazdaSpeedDisplay" class="live-spd-num" x="140" y="136" text-anchor="middle" fill="#ffffff" font-size="50" font-weight="800" letter-spacing="-1">0</text>
-          <text class="as-unit-label" x="140" y="154" text-anchor="middle" fill="#fda4af" font-size="9.5" font-weight="700" letter-spacing="2">KM/H</text>
-          <text x="140" y="216" text-anchor="middle" fill="#f43f5e" font-size="8.5" font-weight="800" letter-spacing="2.4">KODO SPORT</text>
+          <text class="as-unit-label" x="140" y="154" text-anchor="middle" fill="var(--theme-accent)" font-size="9.5" font-weight="700" letter-spacing="2">KM/H</text>
+          <text x="140" y="216" text-anchor="middle" fill="var(--theme-accent)" font-size="8.5" font-weight="800" letter-spacing="2.4">KODO SPORT</text>
         </svg>
       </div>
 
-      <div class="as-hbar">
-        <div class="as-hcell"><small>KETINGGIAN</small><b class="as-c-red"><span class="live-alt-num">--</span> m</b></div>
-        <div class="as-hcell"><small>KOMPAS</small><b class="live-heading-val">--</b></div>
-        <div class="as-hcell"><small>G-FORCE</small><b id="mazdaGDisplay" class="as-c-red">0.00G</b></div>
-        <div class="as-hcell"><small>SUHU BAT</small><b><span class="live-btemp">--</span>°C</b></div>
+      <div class="as-card-row">
+        <div class="as-mcard"><small>MDPL</small><b class="as-acc"><span class="live-alt-num">--</span> m</b></div>
+        <div class="as-mcard"><small>KOMPAS</small><b class="live-heading-val">--</b></div>
+        <div class="as-mcard"><small>G-FORCE</small><b id="mazdaGDisplay" class="as-acc">0.00G</b></div>
+        <div class="as-mcard"><small>SUHU BAT</small><b><span class="live-btemp">--</span>°C</b></div>
       </div>
     </div>
 
     <!-- =====================================================================
-         STYLE 3: HONDA TYPE R +R HD (10-LED F1 SHIFT BAR + FULL-PRESS +R POD)
+         STYLE 3: HONDA CIVIC TYPE R FL5 (+R DIGITAL POPULER — IKUT WARNA TEMA)
          ===================================================================== -->
-    <div id="cluster_honda" class="hidden as-new-theme as-classic-hd">
-      <div class="as-f1-bar" aria-hidden="true">
-        <i id="hondaLed1" class="as-led"></i><i id="hondaLed2" class="as-led"></i><i id="hondaLed3" class="as-led"></i>
-        <i id="hondaLed4" class="as-led"></i><i id="hondaLed5" class="as-led"></i><i id="hondaLed6" class="as-led"></i>
-        <i id="hondaLed7" class="as-led"></i><i id="hondaLed8" class="as-led"></i><i id="hondaLed9" class="as-led"></i>
-        <i id="hondaLed10" class="as-led"></i>
-      </div>
-      <div class="as-hbar">
-        <div class="as-hcell"><small>TRIP A</small><b><span class="live-trip-km">0.0</span> km</b></div>
-        <div class="as-hcell"><small>KEC. MAKS</small><b class="as-c-red"><span class="live-max">0</span></b></div>
-        <div class="as-hcell"><small>RATA-RATA</small><b><span class="live-avg">0</span></b></div>
-        <div class="as-hcell"><small>SATELIT</small><b class="live-sat-badge as-warn">⚠ NO SAT</b></div>
+    <div id="cluster_honda" class="hidden as-new-theme th-honda">
+      <div class="as-card-row">
+        <div class="as-mcard"><small>TRIP A</small><b><span class="live-trip-km">0.0</span> km</b></div>
+        <div class="as-mcard"><small>KEC. MAKS</small><b class="as-acc"><span class="live-max">0</span></b></div>
+        <div class="as-mcard"><small>RATA-RATA</small><b><span class="live-avg">0</span></b></div>
+        <div class="as-mcard"><small>SATELIT</small><b class="live-sat-badge as-warn">⚠ NO SAT</b></div>
       </div>
 
       <div class="as-stage">
-        <div class="as-pod as-pod-tl"><small>TANJAKAN</small><b class="live-inc">+0° · 0°</b></div>
-        <div class="as-pod as-pod-tr live-limit-pod"><span class="live-limit-val">100</span></div>
-        <div class="as-pod as-pod-bl"><svg class="live-wx-svg" width="26" height="24" viewBox="0 0 36 32"></svg><div><div class="wx-t live-wx-temp">--°</div><div class="wx-l live-wx-lbl">Cuaca</div></div></div>
+        <div class="as-pod as-pod-tl" style="top:auto;bottom:34px;left:2px"><small>TANJAKAN</small><b class="live-inc">+0° · 0°</b></div>
+        <div class="as-pod as-pod-tr live-limit-pod" style="top:54px;right:2px"><span class="live-limit-val">100</span></div>
+        <div class="as-pod as-pod-bl"><svg class="live-wx-svg" width="24" height="22" viewBox="0 0 36 32"></svg><div><div class="wx-t live-wx-temp">--°</div><div class="wx-l live-wx-lbl">Cuaca</div></div></div>
         <div class="as-pod as-pod-br"><small>WAKTU JALAN</small><b class="live-time">0:00:00</b></div>
 
-        <svg class="as-stage-svg" viewBox="0 0 280 236" preserveAspectRatio="xMidYMid meet">
+        <svg class="as-stage-svg" viewBox="0 0 280 232" preserveAspectRatio="xMidYMid meet">
           <defs>
-            <linearGradient id="trBar" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0%" stop-color="#22c55e"/><stop offset="55%" stop-color="#f59e0b"/><stop offset="100%" stop-color="#ef4444"/>
+            <linearGradient id="fl5ThemeBar" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stop-color="var(--theme-accent)"/><stop offset="100%" stop-color="var(--theme-accent-2)"/>
             </linearGradient>
-            <linearGradient id="trPod" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stop-color="#260910"/><stop offset="100%" stop-color="#09060b"/>
+            <linearGradient id="fl5GlowLine" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stop-color="var(--theme-accent)" stop-opacity="0"/>
+              <stop offset="50%" stop-color="var(--theme-accent)" stop-opacity="0.85"/>
+              <stop offset="100%" stop-color="var(--theme-accent-2)" stop-opacity="0"/>
             </linearGradient>
           </defs>
-          <polygon points="48,18 232,18 262,50 262,168 232,196 48,196 18,168 18,50" fill="url(#trPod)" stroke="#ef4444" stroke-width="2.2"/>
-          <polygon points="56,26 224,26 250,54 250,164 224,188 56,188 30,164 30,54" fill="none" stroke="rgba(255,255,255,0.10)" stroke-width="1"/>
-          <rect x="102" y="34" width="76" height="20" rx="10" fill="#dc2626"/>
-          <text x="140" y="48" text-anchor="middle" fill="#ffffff" font-size="10" font-weight="900" letter-spacing="1.6">+R MODE</text>
-          <text id="hondaSpeedDisplay" class="live-spd-num" x="140" y="132" text-anchor="middle" fill="#ffffff" font-size="82" font-weight="900" font-style="italic" letter-spacing="-3">0</text>
-          <text class="as-unit-label" x="140" y="156" text-anchor="middle" fill="#fca5a5" font-size="11.5" font-weight="800" letter-spacing="3.5">KM/H</text>
-          <rect x="34" y="168" width="212" height="10" rx="5" fill="#1e293b"/>
-          <rect id="hondaSpeedBlade" x="34" y="168" width="8" height="10" rx="5" fill="url(#trBar)"/>
+
+          <!-- 10-LED Shift Light Row at Top -->
+          <g id="hondaFl5Leds"></g>
+          <!-- 24-Segment Ascending Horizontal Racing Tach/Speed Bar (FL5 Signature!) -->
+          <g id="hondaFl5Bars"></g>
+          <line x1="12" y1="54" x2="268" y2="54" stroke="url(#fl5GlowLine)" stroke-width="1.8"/>
+
+          <!-- +R FL5 Badge following Primary Theme Accent -->
+          <rect x="108" y="62" width="64" height="17" rx="4.5" fill="var(--theme-accent)" opacity="0.22" stroke="var(--theme-accent)" stroke-width="1.2"/>
+          <text x="140" y="73.5" text-anchor="middle" fill="#ffffff" font-size="9" font-weight="900" letter-spacing="1.6">+R FL5</text>
+
+          <!-- Big Clean Frameless Racing Speed Readout -->
+          <text id="hondaSpeedDisplay" class="live-spd-num" x="140" y="144" text-anchor="middle" fill="#ffffff" font-size="82" font-weight="900" font-style="italic" letter-spacing="-3">0</text>
+          <text class="as-unit-label" x="140" y="164" text-anchor="middle" fill="var(--theme-accent)" font-size="11" font-weight="800" letter-spacing="3.2">KM/H</text>
+
+          <!-- Lower Horizontal Load / Acceleration Bar -->
+          <rect x="34" y="174" width="212" height="7" rx="3.5" fill="rgba(255,255,255,0.10)"/>
+          <rect id="hondaSpeedBlade" x="34" y="174" width="8" height="7" rx="3.5" fill="url(#fl5ThemeBar)"/>
         </svg>
       </div>
 
-      <div class="as-hbar">
-        <div class="as-hcell"><small>KETINGGIAN</small><b class="as-c-red"><span class="live-alt-num">--</span> m</b></div>
-        <div class="as-hcell"><small>KOMPAS</small><b class="live-heading-val">--</b></div>
-        <div class="as-hcell"><small>G-FORCE</small><b id="hondaGText" class="as-c-red">0.00G</b></div>
-        <div class="as-hcell"><small>SUHU BAT</small><b><span class="live-btemp">--</span>°C</b></div>
+      <div class="as-card-row">
+        <div class="as-mcard"><small>MDPL</small><b class="as-acc"><span class="live-alt-num">--</span> m</b></div>
+        <div class="as-mcard"><small>KOMPAS</small><b class="live-heading-val">--</b></div>
+        <div class="as-mcard"><small>G-FORCE</small><b id="hondaGText" class="as-acc">0.00G</b></div>
+        <div class="as-mcard"><small>SUHU BAT</small><b><span class="live-btemp">--</span>°C</b></div>
       </div>
     </div>
 
     <!-- =====================================================================
-         STYLE 4: ELIO NEON (INNOVA REBORN — FULL-PRESS ARC + WEATHER POD)
+         STYLE 4: ELIO NEON (INNOVA REBORN — BUSUR BEBAS + 4 KARTU RAMPING)
          ===================================================================== -->
-    <div id="cluster_elio" class="as-new-theme as-elio-theme">
-      <div class="as-top-chips">
-        <div class="as-chip">
-          <svg class="as-chip-ico" viewBox="0 0 24 24" fill="none">
-            <path d="M10 2h4M12 14l3-3M12 6a8 8 0 1 0 0 16 8 8 0 0 0 0-16z" stroke="var(--theme-accent)" stroke-width="1.8" stroke-linecap="round"/>
-          </svg>
-          <div><small>WAKTU JALAN</small><b class="live-time">0:00:00</b></div>
-        </div>
-        <div class="as-chip">
-          <svg class="as-chip-ico" viewBox="0 0 24 24" fill="none">
-            <path d="M7 20L10.2 4M17 20L13.8 4" stroke="var(--theme-accent)" stroke-width="1.8" stroke-linecap="round"/>
-            <path d="M12 5v2.5M12 10.5v3M12 16.5V20" stroke="#e2e8f0" stroke-width="1.6" stroke-linecap="round"/>
-          </svg>
-          <div><small>JARAK</small><b><span class="live-trip-km">0.0</span> km</b></div>
-        </div>
+    <div id="cluster_elio" class="as-new-theme th-elio">
+      <div class="as-card-row">
+        <div class="as-mcard"><small>WAKTU</small><b class="live-time">0:00:00</b></div>
+        <div class="as-mcard"><small>JARAK</small><b><span class="live-trip-km">0.0</span> km</b></div>
+        <div class="as-mcard"><small>KEC. MAX</small><b class="as-acc"><span class="live-max">0</span></b></div>
+        <div class="as-mcard"><small>SATELIT</small><b class="live-sat-badge as-warn">⚠ NO SAT</b></div>
       </div>
 
       <div class="as-stage">
-        <div class="as-pod as-pod-tl"><small>TANJAKAN</small><b class="live-inc">+0° · 0°</b></div>
         <div class="as-pod as-pod-tr live-limit-pod"><span class="live-limit-val">100</span></div>
-        <div class="as-pod as-pod-bl"><svg class="live-wx-svg" width="26" height="24" viewBox="0 0 36 32"></svg><div><div class="wx-t live-wx-temp">--°</div><div class="wx-l live-wx-lbl">Cuaca</div></div></div>
-        <div class="as-pod as-pod-br"><small>SATELIT</small><b class="live-sat-badge as-warn">⚠ NO SAT</b></div>
+        <div class="as-pod as-pod-bl"><svg class="live-wx-svg" width="24" height="22" viewBox="0 0 36 32"></svg><div><div class="wx-t live-wx-temp">--°</div><div class="wx-l live-wx-lbl">Cuaca</div></div></div>
+        <div class="as-pod as-pod-br"><small>TANJAKAN</small><b class="live-inc">+0° · 0°</b></div>
 
-        <svg class="as-stage-svg" viewBox="0 0 380 318" preserveAspectRatio="xMidYMid meet">
+        <svg class="as-stage-svg" viewBox="0 0 340 264" preserveAspectRatio="xMidYMid meet">
           <defs>
             <linearGradient id="elioArcGrad" x1="0%" y1="50%" x2="100%" y2="50%">
-              <stop offset="0%" stop-color="#00f2fe"/><stop offset="48%" stop-color="#4facfe"/>
-              <stop offset="76%" stop-color="#9d4edd"/><stop offset="100%" stop-color="#d946ef"/>
+              <stop offset="0%" stop-color="var(--theme-accent)"/><stop offset="100%" stop-color="var(--theme-accent-2)"/>
             </linearGradient>
             <linearGradient id="elioRoadL" x1="0" y1="1" x2="1" y2="0">
-              <stop offset="0%" stop-color="#a855f7"/><stop offset="100%" stop-color="#00e5ff" stop-opacity="0.22"/>
+              <stop offset="0%" stop-color="var(--theme-accent-2)"/><stop offset="100%" stop-color="var(--theme-accent)" stop-opacity="0.22"/>
             </linearGradient>
             <linearGradient id="elioRoadR" x1="1" y1="1" x2="0" y2="0">
-              <stop offset="0%" stop-color="#a855f7"/><stop offset="100%" stop-color="#00e5ff" stop-opacity="0.22"/>
+              <stop offset="0%" stop-color="var(--theme-accent)"/><stop offset="100%" stop-color="var(--theme-accent-2)" stop-opacity="0.22"/>
             </linearGradient>
-            <radialGradient id="elioCenterHalo" cx="50%" cy="46%" r="52%">
-              <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.26"/>
-              <stop offset="62%" stop-color="#7c3aed" stop-opacity="0.10"/>
-              <stop offset="100%" stop-color="#000" stop-opacity="0"/>
-            </radialGradient>
           </defs>
-          <circle cx="190" cy="166" r="174" fill="url(#elioCenterHalo)"/>
-          <path d="M 30 236 A 176 176 0 1 1 350 236" fill="none" stroke="rgba(255,255,255,0.10)" stroke-width="16" stroke-linecap="round"/>
-          <path id="elioArcProgress" d="M 30 236 A 176 176 0 1 1 350 236" fill="none" stroke="url(#elioArcGrad)" stroke-width="16" stroke-linecap="round"
-                stroke-dasharray="700 820" stroke-dashoffset="700"/>
+          <!-- Unobstructed Full Neon Arc (cx=170, cy=136, r=122) -->
+          <path d="M 59 186 A 122 122 0 1 1 281 186" fill="none" stroke="rgba(255,255,255,0.10)" stroke-width="13" stroke-linecap="round"/>
+          <path id="elioArcProgress" d="M 59 186 A 122 122 0 1 1 281 186" fill="none" stroke="url(#elioArcGrad)" stroke-width="13" stroke-linecap="round"
+                stroke-dasharray="486 560" stroke-dashoffset="486"/>
           <g id="elioTicks" stroke="#e2e8f0" stroke-linecap="round"></g>
-          <g id="elioNumbers" fill="#e2e8f0" font-size="14" font-weight="700" text-anchor="middle"></g>
-          <text id="elioSpeedDisplay" class="live-spd-num" x="190" y="168" text-anchor="middle" fill="#ffffff" font-size="88" font-weight="800" font-style="italic" letter-spacing="-3">0</text>
-          <text class="as-unit-label" x="190" y="198" text-anchor="middle" fill="#cbd5e1" font-size="15" font-weight="600" letter-spacing="1.2">km/h</text>
-          <path d="M 10 310 L 138 228" stroke="url(#elioRoadL)" stroke-width="3.2" opacity="0.9"/>
-          <path d="M 370 310 L 242 228" stroke="url(#elioRoadR)" stroke-width="3.2" opacity="0.9"/>
-          <path d="M 118 286 L 146 258" stroke="#e2e8f0" stroke-width="2.6" stroke-linecap="round" opacity="0.82"/>
-          <path d="M 262 286 L 234 258" stroke="#e2e8f0" stroke-width="2.6" stroke-linecap="round" opacity="0.82"/>
+          <g id="elioNumbers" fill="#cbd5e1" font-size="10.5" font-weight="700" text-anchor="middle"></g>
+          <text id="elioSpeedDisplay" class="live-spd-num" x="170" y="138" text-anchor="middle" fill="#ffffff" font-size="72" font-weight="800" font-style="italic" letter-spacing="-2">0</text>
+          <text class="as-unit-label" x="170" y="160" text-anchor="middle" fill="#cbd5e1" font-size="12" font-weight="700" letter-spacing="1.4">km/h</text>
+          <!-- Perspective Road -->
+          <path d="M 28 256 L 128 190" stroke="url(#elioRoadL)" stroke-width="2.8" opacity="0.9"/>
+          <path d="M 312 256 L 212 190" stroke="url(#elioRoadR)" stroke-width="2.8" opacity="0.9"/>
+          <path d="M 106 238 L 130 214" stroke="#e2e8f0" stroke-width="2.2" stroke-linecap="round" opacity="0.8"/>
+          <path d="M 234 238 L 210 214" stroke="#e2e8f0" stroke-width="2.2" stroke-linecap="round" opacity="0.8"/>
         </svg>
         <div class="as-car-wrap">
-          <div class="as-car-glow"></div>
           <img class="as-car-img" src="innova-reborn.png" alt="Toyota Innova Reborn"/>
         </div>
       </div>
 
-      <div class="as-sensor-row">
-        <div class="as-s-pill"><small>KEC. MAX</small><b><span class="live-max">0</span></b></div>
-        <div class="as-s-pill"><small>MDPL</small><b><span class="live-alt-num">--</span> m</b></div>
-        <div class="as-s-pill"><small>KOMPAS</small><b class="live-heading-val">--</b></div>
-        <div class="as-s-pill"><small>G-FORCE</small><b id="elioGDisplay">0.00 G</b></div>
-        <div class="as-s-pill"><small>SUHU BAT</small><b><span class="live-btemp">--</span>°C</b></div>
+      <div class="as-card-row">
+        <div class="as-mcard"><small>MDPL</small><b class="as-acc"><span class="live-alt-num">--</span> m</b></div>
+        <div class="as-mcard"><small>KOMPAS</small><b class="live-heading-val">--</b></div>
+        <div class="as-mcard"><small>G-FORCE</small><b id="elioGDisplay" class="as-acc">0.00 G</b></div>
+        <div class="as-mcard"><small>SUHU BAT</small><b><span class="live-btemp">--</span>°C</b></div>
       </div>
     </div>
 
     <!-- =====================================================================
-         STYLE 5: BMW M SPORT (INNOVA REBORN — WIDE CHEVRON BLADES + ZERO CLIP)
+         STYLE 5: BMW M SPORT (INNOVA REBORN — WIDE CHEVRON BLADES + 4 KARTU)
          ===================================================================== -->
-    <div id="cluster_bmw_m" class="hidden as-new-theme as-bmw-theme">
-      <div class="as-top-chips">
-        <div class="as-chip as-bmw-chip">
-          <svg class="as-chip-ico" viewBox="0 0 24 24" fill="none">
-            <path d="M10 2h4M12 14l3-3M12 6a8 8 0 1 0 0 16 8 8 0 0 0 0-16z" stroke="#e2e8f0" stroke-width="1.8" stroke-linecap="round"/>
-          </svg>
-          <div><small>WAKTU</small><b class="live-time">0:00:00</b></div>
-        </div>
-        <div class="as-bmw-m-badge" aria-hidden="true">
-          <i style="background:#00a8ff"></i><i style="background:#1d4ed8"></i><i style="background:#e11d48"></i><span>M</span>
-        </div>
-        <div class="as-chip as-bmw-chip">
-          <svg class="as-chip-ico" viewBox="0 0 24 24" fill="none">
-            <path d="M7 20L10.2 4M17 20L13.8 4" stroke="#e2e8f0" stroke-width="1.8" stroke-linecap="round"/>
-            <path d="M12 5v2.5M12 10.5v3M12 16.5V20" stroke="#e2e8f0" stroke-width="1.6" stroke-linecap="round"/>
-          </svg>
-          <div><small>JARAK</small><b><span class="live-trip-km">0.0</span> km</b></div>
-        </div>
+    <div id="cluster_bmw_m" class="hidden as-new-theme th-bmwm">
+      <div class="as-card-row">
+        <div class="as-mcard"><small>WAKTU</small><b class="live-time">0:00:00</b></div>
+        <div class="as-mcard"><small>JARAK</small><b><span class="live-trip-km">0.0</span> km</b></div>
+        <div class="as-mcard"><small>KEC. MAX</small><b class="as-acc"><span class="live-max">0</span></b></div>
+        <div class="as-mcard"><small>SATELIT</small><b class="live-sat-badge as-warn">⚠ NO SAT</b></div>
       </div>
 
       <div class="as-stage">
-        <div class="as-pod as-pod-tl"><small>TANJAKAN</small><b class="live-inc">+0° · 0°</b></div>
         <div class="as-pod as-pod-tr live-limit-pod"><span class="live-limit-val">100</span></div>
-        <div class="as-pod as-pod-bl"><svg class="live-wx-svg" width="26" height="24" viewBox="0 0 36 32"></svg><div><div class="wx-t live-wx-temp">--°</div><div class="wx-l live-wx-lbl">Cuaca</div></div></div>
-        <div class="as-pod as-pod-br"><small>SATELIT</small><b class="live-sat-badge as-warn">⚠ NO SAT</b></div>
+        <div class="as-pod as-pod-bl"><svg class="live-wx-svg" width="24" height="22" viewBox="0 0 36 32"></svg><div><div class="wx-t live-wx-temp">--°</div><div class="wx-l live-wx-lbl">Cuaca</div></div></div>
+        <div class="as-pod as-pod-br"><small>TANJAKAN</small><b class="live-inc">+0° · 0°</b></div>
 
-        <svg class="as-stage-svg" viewBox="0 0 420 310" preserveAspectRatio="xMidYMid meet">
+        <svg class="as-stage-svg" viewBox="0 0 420 296" preserveAspectRatio="xMidYMid meet">
           <defs>
             <linearGradient id="bmwBladeBlue" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#38bdf8" stop-opacity="0.95"/><stop offset="52%" stop-color="#0284c7" stop-opacity="0.72"/><stop offset="100%" stop-color="#0ea5e9" stop-opacity="0.16"/></linearGradient>
             <linearGradient id="bmwBladeRed" x1="1" y1="0" x2="0" y2="0"><stop offset="0%" stop-color="#ff2e55" stop-opacity="0.95"/><stop offset="52%" stop-color="#dc2626" stop-opacity="0.72"/><stop offset="100%" stop-color="#ef4444" stop-opacity="0.16"/></linearGradient>
             <radialGradient id="bmwHexBg" cx="50%" cy="42%" r="60%"><stop offset="0%" stop-color="#142342" stop-opacity="0.75"/><stop offset="65%" stop-color="#070e20" stop-opacity="0.9"/><stop offset="100%" stop-color="#03060f" stop-opacity="0.96"/></radialGradient>
-            <radialGradient id="bmwFlareB" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#38bdf8" stop-opacity="0.6"/><stop offset="50%" stop-color="#0284c7" stop-opacity="0.2"/><stop offset="100%" stop-color="#0284c7" stop-opacity="0"/></radialGradient>
-            <radialGradient id="bmwFlareR" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#ff2e55" stop-opacity="0.6"/><stop offset="50%" stop-color="#b91c1c" stop-opacity="0.2"/><stop offset="100%" stop-color="#b91c1c" stop-opacity="0"/></radialGradient>
-            <clipPath id="clipBmwL"><path d="M 134 18 L 62 18 L 10 132 L 66 238 L 138 238 L 94 132 Z"/></clipPath>
-            <clipPath id="clipBmwR"><path d="M 286 18 L 358 18 L 410 132 L 354 238 L 282 238 L 326 132 Z"/></clipPath>
+            <clipPath id="clipBmwL"><path d="M 134 14 L 62 14 L 10 124 L 66 226 L 138 226 L 94 124 Z"/></clipPath>
+            <clipPath id="clipBmwR"><path d="M 286 14 L 358 14 L 410 124 L 354 226 L 282 226 L 326 124 Z"/></clipPath>
           </defs>
-          <ellipse cx="32" cy="132" rx="75" ry="100" fill="url(#bmwFlareB)"/>
-          <ellipse cx="388" cy="132" rx="75" ry="100" fill="url(#bmwFlareR)"/>
-          <path d="M 142 14 L 278 14 L 330 132 L 278 242 L 142 242 L 90 132 Z" fill="url(#bmwHexBg)" stroke="rgba(148,163,184,0.18)" stroke-width="1.2"/>
+          <path d="M 142 10 L 278 10 L 330 124 L 278 230 L 142 230 L 90 124 Z" fill="url(#bmwHexBg)" stroke="rgba(148,163,184,0.18)" stroke-width="1.2"/>
 
-          <path d="M 134 18 L 62 18 L 10 132 L 66 238 L 138 238 L 94 132 Z" fill="rgba(14, 58, 110, 0.28)" stroke="rgba(56,189,248,0.28)" stroke-width="1"/>
+          <path d="M 134 14 L 62 14 L 10 124 L 66 226 L 138 226 L 94 124 Z" fill="rgba(14, 58, 110, 0.28)" stroke="rgba(56,189,248,0.28)" stroke-width="1"/>
           <g clip-path="url(#clipBmwL)">
-            <rect id="bmwMLFill" x="6" y="238" width="136" height="0" fill="url(#bmwBladeBlue)"/>
-            <rect id="bmwMLCap" x="6" y="238" width="136" height="4" fill="#e0f2fe" opacity="0"/>
+            <rect id="bmwMLFill" x="6" y="226" width="136" height="0" fill="url(#bmwBladeBlue)"/>
+            <rect id="bmwMLCap" x="6" y="226" width="136" height="4" fill="#e0f2fe" opacity="0"/>
           </g>
-          <path d="M 66 238 L 10 132 L 62 18" fill="none" stroke="var(--theme-accent)" stroke-width="6" stroke-linejoin="round" opacity="0.28"/>
-          <path d="M 66 238 L 10 132 L 62 18" fill="none" stroke="var(--theme-accent)" stroke-width="2.2" stroke-linejoin="round" opacity="0.92"/>
+          <path d="M 66 226 L 10 124 L 62 14" fill="none" stroke="var(--theme-accent)" stroke-width="6" stroke-linejoin="round" opacity="0.28"/>
+          <path d="M 66 226 L 10 124 L 62 14" fill="none" stroke="var(--theme-accent)" stroke-width="2.2" stroke-linejoin="round" opacity="0.92"/>
 
-          <path d="M 286 18 L 358 18 L 410 132 L 354 238 L 282 238 L 326 132 Z" fill="rgba(110, 14, 34, 0.28)" stroke="rgba(255,46,85,0.28)" stroke-width="1"/>
+          <path d="M 286 14 L 358 14 L 410 124 L 354 226 L 282 226 L 326 124 Z" fill="rgba(110, 14, 34, 0.28)" stroke="rgba(255,46,85,0.28)" stroke-width="1"/>
           <g clip-path="url(#clipBmwR)">
-            <rect id="bmwMRFill" x="278" y="238" width="136" height="0" fill="url(#bmwBladeRed)"/>
-            <rect id="bmwMRCap" x="278" y="238" width="136" height="4" fill="#ffe4e6" opacity="0"/>
+            <rect id="bmwMRFill" x="278" y="226" width="136" height="0" fill="url(#bmwBladeRed)"/>
+            <rect id="bmwMRCap" x="278" y="226" width="136" height="4" fill="#ffe4e6" opacity="0"/>
           </g>
-          <path d="M 354 238 L 410 132 L 358 18" fill="none" stroke="var(--theme-accent)" stroke-width="6" stroke-linejoin="round" opacity="0.28"/>
-          <path d="M 354 238 L 410 132 L 358 18" fill="none" stroke="var(--theme-accent)" stroke-width="2.2" stroke-linejoin="round" opacity="0.92"/>
+          <path d="M 354 226 L 410 124 L 358 14" fill="none" stroke="var(--theme-accent)" stroke-width="6" stroke-linejoin="round" opacity="0.28"/>
+          <path d="M 354 226 L 410 124 L 358 14" fill="none" stroke="var(--theme-accent)" stroke-width="2.2" stroke-linejoin="round" opacity="0.92"/>
 
           <g fill="#f1f5f9" font-size="13" font-weight="700" font-style="italic" text-anchor="end">
-            <text x="122" y="34">240</text><text x="104" y="64">200</text><text x="86" y="98">160</text>
-            <text x="80" y="134">120</text><text x="92" y="168">80</text><text x="108" y="202">40</text><text x="124" y="232">0</text>
+            <text x="122" y="30">240</text><text x="104" y="60">200</text><text x="86" y="92">160</text>
+            <text x="80" y="126">120</text><text x="92" y="160">80</text><text x="108" y="192">40</text><text x="124" y="220">0</text>
           </g>
           <g fill="#f1f5f9" font-size="13.5" font-weight="700" font-style="italic" text-anchor="start">
-            <text x="298" y="34">7</text><text x="318" y="68">6</text><text x="334" y="102">5</text>
-            <text x="342" y="134">4</text><text x="330" y="168">3</text><text x="314" y="202">2</text><text x="298" y="232">0</text>
+            <text x="298" y="30">7</text><text x="318" y="62">6</text><text x="334" y="94">5</text>
+            <text x="342" y="126">4</text><text x="330" y="160">3</text><text x="314" y="192">2</text><text x="298" y="220">0</text>
           </g>
 
-          <text class="as-unit-label" x="210" y="56" text-anchor="middle" fill="#94a3b8" font-size="12" font-style="italic">km/h</text>
-          <text id="bmwMSpeedDisplay" class="live-spd-num" x="210" y="142" text-anchor="middle" fill="#ffffff" font-size="84" font-weight="800" font-style="italic" letter-spacing="-3">0</text>
-          <text class="as-unit-label" x="210" y="170" text-anchor="middle" fill="#cbd5e1" font-size="14" font-style="italic">km/h</text>
+          <text id="bmwMSpeedDisplay" class="live-spd-num" x="210" y="136" text-anchor="middle" fill="#ffffff" font-size="84" font-weight="800" font-style="italic" letter-spacing="-3">0</text>
+          <text class="as-unit-label" x="210" y="164" text-anchor="middle" fill="#cbd5e1" font-size="14" font-style="italic">km/h</text>
 
-          <path d="M 14 304 L 154 244" stroke="#00d2ff" stroke-width="3.6" opacity="0.88"/>
-          <path d="M 406 304 L 266 244" stroke="#ff1e42" stroke-width="3.6" opacity="0.88"/>
-          <path d="M 114 296 L 134 278" stroke="#ffffff" stroke-width="3.4" stroke-linecap="round" opacity="0.9"/>
-          <path d="M 306 296 L 286 278" stroke="#ffffff" stroke-width="3.4" stroke-linecap="round" opacity="0.9"/>
+          <path d="M 18 288 L 154 232" stroke="#00d2ff" stroke-width="3.4" opacity="0.88"/>
+          <path d="M 402 288 L 266 232" stroke="#ff1e42" stroke-width="3.4" opacity="0.88"/>
+          <path d="M 116 280 L 136 262" stroke="#ffffff" stroke-width="3" stroke-linecap="round" opacity="0.85"/>
+          <path d="M 304 280 L 284 262" stroke="#ffffff" stroke-width="3" stroke-linecap="round" opacity="0.85"/>
         </svg>
         <div class="as-car-wrap">
-          <div class="as-car-glow as-car-glow-bmw"></div>
           <img class="as-car-img" src="innova-reborn.png" alt="Toyota Innova Reborn"/>
         </div>
       </div>
 
-      <div class="as-bmw-metrics">
-        <div class="as-bmw-card">
-          <svg class="as-m-ico" viewBox="0 0 24 24" fill="none"><path d="M4 16a8 8 0 1 1 16 0M12 12l4-3" stroke="#38bdf8" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="14" r="1.8" fill="#fff"/></svg>
-          <div><small>KEC. MAX</small><b><span class="live-max">0</span></b></div>
-        </div>
-        <div class="as-bmw-card">
-          <svg class="as-m-ico" viewBox="0 0 24 24" fill="none"><path d="M3 19l6-10 4 6 3-4 5 8H3z" stroke="#e2e8f0" stroke-width="1.8" stroke-linejoin="round"/></svg>
-          <div><small>MDPL</small><b><span class="live-alt-num">--</span> m</b></div>
-        </div>
-        <div class="as-bmw-card">
-          <svg class="as-m-ico" viewBox="0 0 24 24" fill="none"><path d="M14 14.8V5a2 2 0 1 0-4 0v9.8a4 4 0 1 0 4 0z" stroke="#f87171" stroke-width="1.8"/><circle cx="12" cy="17" r="1.5" fill="#f87171"/></svg>
-          <div><small>SUHU BAT</small><b><span class="live-btemp">--</span>°C</b></div>
-        </div>
-        <div class="as-bmw-card">
-          <svg class="as-m-ico" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.5" stroke="#38bdf8" stroke-width="1.7"/><path d="M12 7l2.5 5-2.5 5-2.5-5z" fill="#38bdf8"/></svg>
-          <div><small>KOMPAS/G</small><b><span class="live-heading-val">--</span> · <span id="bmwMGDisplay">0.0G</span></b></div>
-        </div>
+      <div class="as-card-row">
+        <div class="as-mcard"><small>MDPL</small><b class="as-acc"><span class="live-alt-num">--</span> m</b></div>
+        <div class="as-mcard"><small>KOMPAS</small><b class="live-heading-val">--</b></div>
+        <div class="as-mcard"><small>G-FORCE</small><b id="bmwMGDisplay" class="as-acc">0.0G</b></div>
+        <div class="as-mcard"><small>SUHU BAT</small><b><span class="live-btemp">--</span>°C</b></div>
       </div>
     </div>
   </section>

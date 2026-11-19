@@ -14,7 +14,13 @@ import kotlin.math.sin
  * Ikon vektor modern ringan untuk 5 tombol dock bawah Elio UX (Aplikasi, Maps, YouTube, Mulai/Tema, Atur).
  * Digambar murni dengan Canvas Android tanpa library luar sehingga sangat ringan di tablet lama.
  */
-class DockIconView(ctx: Context, private val kind: Int) : View(ctx) {
+class DockIconView(ctx: Context, private var kind: Int) : View(ctx) {
+
+    fun setKind(newKind: Int) {
+        if (kind == newKind) return
+        kind = newKind
+        invalidate()
+    }
 
     private val d = ctx.resources.displayMetrics.density
     private val p = Paint(Paint.ANTI_ALIAS_FLAG)

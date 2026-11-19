@@ -53,6 +53,8 @@ class MainActivity : Activity() {
     private lateinit var labelA: TextView
     private lateinit var labelB: TextView
     private lateinit var labelStart: TextView
+    private var iconA: DockIconView? = null
+    private var iconB: DockIconView? = null
     private lateinit var overlay: SlotOverlay
 
     private val weather = WeatherHub()
@@ -311,6 +313,8 @@ class MainActivity : Activity() {
         labelA = lblA
         labelB = lblB
         labelStart = lblStart
+        iconA = tileA.getChildAt(0) as? DockIconView
+        iconB = tileB.getChildAt(0) as? DockIconView
         addDockTile(dock, tileApps)
         addDockTile(dock, tileA)
         addDockTile(dock, tileB)
@@ -466,10 +470,21 @@ class MainActivity : Activity() {
         dlgRef = showModernCard("❖ PILIH TEMA SPEEDOMETER", "6 Tema HD Full-Press", listBox)
     }
 
+    private fun iconKindFor(pkg: String, defaultKind: Int): Int {
+        val p = pkg.lowercase(Locale.US)
+        return when {
+            p.contains("youtube") -> DockIconView.YOUTUBE
+            p.contains("maps") || p.contains("waze") -> DockIconView.MAPS
+            else -> defaultKind
+        }
+    }
+
     private fun updateSlotButtons() {
         labelStart.text = "Mulai ${prefs.panelCount}x"
         labelA.text = engine.labelOf(prefs.panelA)
         labelB.text = engine.labelOf(prefs.panelB)
+        iconA?.setKind(iconKindFor(prefs.panelA, DockIconView.MAPS))
+        iconB?.setKind(iconKindFor(prefs.panelB, DockIconView.YOUTUBE))
     }
 
     /**
@@ -1647,7 +1662,7 @@ class MainActivity : Activity() {
             "Lexus F-Sport (HD)",
             "BMW G-Series (iDrive 8 HD)",
             "Mazda KODO (HD)",
-            "Honda Type R (HD)",
+            "Honda Civic Type R FL5 (HD)",
             "ELIO Neon (Innova Reborn)",
             "BMW M Sport (Innova Reborn)"
         )

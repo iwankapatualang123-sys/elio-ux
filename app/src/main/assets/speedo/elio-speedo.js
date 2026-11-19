@@ -1,6 +1,6 @@
 /* =============================================================================
-   ELIO UX SPEEDO — Penggerak 6 Tema HD Full-Press (Tanpa transmisi ECU P/D/R)
-   'lfa' | 'm3' | 'mazda' | 'honda' | 'elio' | 'bmw_m'
+   ELIO UX SPEEDO — 6 Tema HD Full-Press (Mengikuti Warna Tema Utama)
+   'lfa' | 'm3' (BMW G-Series) | 'mazda' | 'honda' (Civic FL5) | 'elio' | 'bmw_m'
    ============================================================================= */
 (function (global) {
   'use strict';
@@ -12,6 +12,8 @@
   let style = 'elio';
   let lastGridBucket = -1;
   let ticksBuilt = false;
+  let fl5BarEls = [];
+  let fl5LedEls = [];
 
   const $ = (id) => (root ? root.querySelector('#' + id) : null);
   const setText = (id, value) => { const el = $(id); if (el) el.textContent = value; };
@@ -30,31 +32,31 @@
     ticksBuilt = true;
     const ns = 'http://www.w3.org/2000/svg';
 
-    // 1. ELIO Neon full-press ticks (cx=190, cy=168, r=158..172)
+    // 1. ELIO Neon unobstructed arc ticks (cx=170, cy=136, r=104..116)
     const eT = $('elioTicks'), eN = $('elioNumbers');
     if (eT && eN) {
       for (let i = 0; i <= 24; i++) {
         const a = (156 + (i / 24) * 228) * Math.PI / 180;
         const maj = i % 2 === 0;
         const l = document.createElementNS(ns, 'line');
-        l.setAttribute('x1', (190 + Math.cos(a) * (maj ? 158 : 163)).toFixed(1));
-        l.setAttribute('y1', (168 + Math.sin(a) * (maj ? 158 : 163)).toFixed(1));
-        l.setAttribute('x2', (190 + Math.cos(a) * 172).toFixed(1));
-        l.setAttribute('y2', (168 + Math.sin(a) * 172).toFixed(1));
-        l.setAttribute('stroke-width', maj ? '2.4' : '1.2');
-        l.setAttribute('opacity', maj ? '0.92' : '0.45');
+        l.setAttribute('x1', (170 + Math.cos(a) * (maj ? 105 : 109)).toFixed(1));
+        l.setAttribute('y1', (136 + Math.sin(a) * (maj ? 105 : 109)).toFixed(1));
+        l.setAttribute('x2', (170 + Math.cos(a) * 116).toFixed(1));
+        l.setAttribute('y2', (136 + Math.sin(a) * 116).toFixed(1));
+        l.setAttribute('stroke-width', maj ? '2.1' : '1.1');
+        l.setAttribute('opacity', maj ? '0.9' : '0.42');
         eT.appendChild(l);
-        if (maj) {
+        if (maj && i % 4 === 0) {
           const t = document.createElementNS(ns, 'text');
-          t.setAttribute('x', (190 + Math.cos(a) * 134).toFixed(1));
-          t.setAttribute('y', (168 + Math.sin(a) * 134 + 5).toFixed(1));
+          t.setAttribute('x', (170 + Math.cos(a) * 90).toFixed(1));
+          t.setAttribute('y', (136 + Math.sin(a) * 90 + 3.5).toFixed(1));
           t.textContent = String(i * 10);
           eN.appendChild(t);
         }
       }
     }
 
-    // 2. Lexus F-Sport HD ticks (cx=140, cy=126)
+    // 2. Lexus F-Sport HD ticks (cx=140, cy=124)
     const lT = $('lfaTicks'), lN = $('lfaNums');
     if (lT && lN) {
       for (let i = 0; i <= 24; i++) {
@@ -62,23 +64,23 @@
         const maj = i % 2 === 0;
         const l = document.createElementNS(ns, 'line');
         l.setAttribute('x1', (140 + Math.cos(a) * (maj ? 82 : 87)).toFixed(1));
-        l.setAttribute('y1', (126 + Math.sin(a) * (maj ? 82 : 87)).toFixed(1));
+        l.setAttribute('y1', (124 + Math.sin(a) * (maj ? 82 : 87)).toFixed(1));
         l.setAttribute('x2', (140 + Math.cos(a) * 93).toFixed(1));
-        l.setAttribute('y2', (126 + Math.sin(a) * 93).toFixed(1));
+        l.setAttribute('y2', (124 + Math.sin(a) * 93).toFixed(1));
         l.setAttribute('stroke-width', maj ? '2' : '1');
         l.setAttribute('opacity', maj ? '0.9' : '0.4');
         lT.appendChild(l);
         if (maj && i % 4 === 0) {
           const t = document.createElementNS(ns, 'text');
           t.setAttribute('x', (140 + Math.cos(a) * 70).toFixed(1));
-          t.setAttribute('y', (126 + Math.sin(a) * 70 + 4).toFixed(1));
+          t.setAttribute('y', (124 + Math.sin(a) * 70 + 4).toFixed(1));
           t.textContent = String(i * 10);
           lN.appendChild(t);
         }
       }
     }
 
-    // 3. Mazda KODO HD 49 precision ticks (cx=140, cy=126)
+    // 3. Mazda KODO HD 49 precision ticks (cx=140, cy=124)
     const mT = $('mazdaTicks'), mN = $('mazdaNums');
     if (mT && mN) {
       for (let i = 0; i <= 48; i++) {
@@ -87,20 +89,50 @@
         const r1 = maj ? 84 : (mid ? 90 : 94);
         const l = document.createElementNS(ns, 'line');
         l.setAttribute('x1', (140 + Math.cos(a) * r1).toFixed(1));
-        l.setAttribute('y1', (126 + Math.sin(a) * r1).toFixed(1));
+        l.setAttribute('y1', (124 + Math.sin(a) * r1).toFixed(1));
         l.setAttribute('x2', (140 + Math.cos(a) * 98).toFixed(1));
-        l.setAttribute('y2', (126 + Math.sin(a) * 98).toFixed(1));
+        l.setAttribute('y2', (124 + Math.sin(a) * 98).toFixed(1));
         l.setAttribute('stroke-width', maj ? '2.2' : '1');
-        if (i >= 36) l.setAttribute('stroke', '#f43f5e');
+        if (i >= 36) l.setAttribute('stroke', 'var(--theme-accent-2)');
         l.setAttribute('opacity', maj ? '0.95' : '0.45');
         mT.appendChild(l);
         if (maj && i % 8 === 0) {
           const t = document.createElementNS(ns, 'text');
           t.setAttribute('x', (140 + Math.cos(a) * 69).toFixed(1));
-          t.setAttribute('y', (126 + Math.sin(a) * 69 + 4).toFixed(1));
+          t.setAttribute('y', (124 + Math.sin(a) * 69 + 4).toFixed(1));
           t.textContent = String(i * 5);
           mN.appendChild(t);
         }
+      }
+    }
+
+    // 4. Honda Civic Type R FL5 — 10-LED Shift Bar + 24 Ascending Racing Segments
+    const hLeds = $('hondaFl5Leds'), hBars = $('hondaFl5Bars');
+    if (hLeds && hBars) {
+      fl5LedEls = [];
+      for (let i = 0; i < 10; i++) {
+        const r = document.createElementNS(ns, 'rect');
+        r.setAttribute('x', (56 + i * 17).toFixed(1));
+        r.setAttribute('y', '6');
+        r.setAttribute('width', '12');
+        r.setAttribute('height', '4.8');
+        r.setAttribute('rx', '2');
+        r.setAttribute('fill', '#1e293b');
+        hLeds.appendChild(r);
+        fl5LedEls.push(r);
+      }
+      fl5BarEls = [];
+      for (let i = 0; i < 24; i++) {
+        const h = 11 + Math.round((i / 23) * 23);
+        const r = document.createElementNS(ns, 'rect');
+        r.setAttribute('x', (12 + i * 10.7).toFixed(1));
+        r.setAttribute('y', String(49 - h));
+        r.setAttribute('width', '8.2');
+        r.setAttribute('height', String(h));
+        r.setAttribute('rx', '1.6');
+        r.setAttribute('fill', 'rgba(255,255,255,0.10)');
+        hBars.appendChild(r);
+        fl5BarEls.push(r);
       }
     }
   }
@@ -139,10 +171,10 @@
     // 0. Lexus F-Sport HD
     setText('lfaSpeedDisplay', v);
     setAttr('lfaHaloBlade', 'stroke-dashoffset', Math.round(462 * (1 - r240)));
-    setAttr('lfaNeedle', 'transform', `rotate(${(-135 + r240 * 270).toFixed(1)} 140 126)`);
+    setAttr('lfaNeedle', 'transform', `rotate(${(-135 + r240 * 270).toFixed(1)} 140 124)`);
     setText('lfaGDisplay', gText);
 
-    // 1. BMW G-Series (iDrive 8 Live Cockpit) — Slanted rising luminous blue & red bars
+    // 1. BMW G-Series (iDrive 8 Live Cockpit)
     setText('speedDisplay', v);
     const m3Lh = Math.round(r240 * 160);
     const m3Rh = Math.round(rLoad * 160);
@@ -158,52 +190,54 @@
     setAttr('m3GDot', 'cy', Math.min(216, Math.max(176, Math.round(196 - r240 * 16))));
     setText('gScoreDisplay', gText);
 
+    // 2. Mazda KODO HD
+    setText('mazdaSpeedDisplay', v);
+    setAttr('mazdaHaloArc', 'stroke-dashoffset', Math.round(485 * (1 - r240)));
+    setAttr('mazdaNeedle', 'transform', `rotate(${(-135 + r240 * 270).toFixed(1)} 140 124)`);
+    setText('mazdaGDisplay', gText);
+
+    // 3. Honda Civic Type R FL5 (+R Digital Populer — follows Theme Accent!)
+    setText('hondaSpeedDisplay', v);
+    setAttr('hondaSpeedBlade', 'width', Math.max(8, Math.round(r240 * 212)));
+    setText('hondaGText', gText);
+    const ledLit = Math.round(r240 * 10);
+    for (let i = 0; i < fl5LedEls.length; i++) {
+      fl5LedEls[i].setAttribute('fill', i < ledLit
+        ? (i < 5 ? 'var(--theme-accent)' : (i < 8 ? 'var(--theme-accent-2)' : '#ef4444'))
+        : '#1e293b');
+    }
+    const barLit = Math.round(r240 * 24);
+    for (let i = 0; i < fl5BarEls.length; i++) {
+      fl5BarEls[i].setAttribute('fill', i < barLit
+        ? (i < 15 ? 'var(--theme-accent)' : (i < 20 ? 'var(--theme-accent-2)' : '#ef4444'))
+        : 'rgba(255,255,255,0.10)');
+    }
+
+    // 4. ELIO Neon (Innova Reborn)
+    setText('elioSpeedDisplay', v);
+    setAttr('elioArcProgress', 'stroke-dashoffset', Math.round(486 * (1 - r240)));
+    setText('elioGDisplay', gAbs.toFixed(2) + ' G');
+
+    // 5. BMW M Sport (Innova Reborn)
+    setText('bmwMSpeedDisplay', v);
+    const bmwLh = Math.round(r240 * 212);
+    const bmwRh = Math.round(rLoad * 212);
+    setAttr('bmwMLFill', 'y', 226 - bmwLh);
+    setAttr('bmwMLFill', 'height', bmwLh);
+    setAttr('bmwMLCap', 'y', 226 - bmwLh);
+    setAttr('bmwMLCap', 'opacity', bmwLh > 2 ? '0.95' : '0');
+    setAttr('bmwMRFill', 'y', 226 - bmwRh);
+    setAttr('bmwMRFill', 'height', bmwRh);
+    setAttr('bmwMRCap', 'y', 226 - bmwRh);
+    setAttr('bmwMRCap', 'opacity', bmwRh > 2 ? '0.95' : '0');
+    setText('bmwMGDisplay', gAbs.toFixed(1) + 'G');
+
     // High-G warning highlight (> 0.65G)
     const highG = gAbs >= 0.65;
     ['lfaGDisplay', 'gScoreDisplay', 'mazdaGDisplay', 'hondaGText', 'elioGDisplay', 'bmwMGDisplay'].forEach((id) => {
       const el = $(id);
       if (el) el.classList.toggle('as-high-g', highG);
     });
-
-    // 2. Mazda KODO HD
-    setText('mazdaSpeedDisplay', v);
-    setAttr('mazdaHaloArc', 'stroke-dashoffset', Math.round(485 * (1 - r240)));
-    setAttr('mazdaNeedle', 'transform', `rotate(${(-135 + r240 * 270).toFixed(1)} 140 126)`);
-    setText('mazdaGDisplay', gText);
-
-    // 3. Honda Type R +R HD
-    setText('hondaSpeedDisplay', v);
-    setAttr('hondaSpeedBlade', 'width', Math.max(8, Math.round(r240 * 216)));
-    setText('hondaGText', gText);
-    const lit = Math.round(r240 * 10);
-    for (let i = 1; i <= 10; i++) {
-      const led = $('hondaLed' + i);
-      if (!led) continue;
-      if (i <= lit) {
-        led.style.background = i <= 4 ? '#22c55e' : (i <= 7 ? '#f59e0b' : '#ef4444');
-      } else {
-        led.style.background = '#1e293b';
-      }
-    }
-
-    // 4. ELIO Neon (Innova Reborn) Full-Press
-    setText('elioSpeedDisplay', v);
-    setAttr('elioArcProgress', 'stroke-dashoffset', Math.round(700 * (1 - r240)));
-    setText('elioGDisplay', gAbs.toFixed(2) + ' G');
-
-    // 5. BMW M Sport (Innova Reborn) — Wide rising luminous blue & red blades
-    setText('bmwMSpeedDisplay', v);
-    const bmwLh = Math.round(r240 * 220);
-    const bmwRh = Math.round(rLoad * 220);
-    setAttr('bmwMLFill', 'y', 238 - bmwLh);
-    setAttr('bmwMLFill', 'height', bmwLh);
-    setAttr('bmwMLCap', 'y', 238 - bmwLh);
-    setAttr('bmwMLCap', 'opacity', bmwLh > 2 ? '0.95' : '0');
-    setAttr('bmwMRFill', 'y', 238 - bmwRh);
-    setAttr('bmwMRFill', 'height', bmwRh);
-    setAttr('bmwMRCap', 'y', 238 - bmwRh);
-    setAttr('bmwMRCap', 'opacity', bmwRh > 2 ? '0.95' : '0');
-    setText('bmwMGDisplay', gAbs.toFixed(1) + 'G');
   }
 
   function setSpeed(kmh) {
@@ -256,22 +290,21 @@
   function setUnit(u) {
     ensureRoot();
     const label = u === 'mph' ? 'mph' : 'km/h';
-    root.querySelectorAll('.as-unit-label, .as-unit-sm').forEach((el) => {
-      if (el.textContent !== label) el.textContent = label;
-    });
+    root.querySelectorAll('.as-unit-label').forEach((el) => { el.textContent = label; });
   }
 
   const api = {
     init, setSpeed, setGForce, setStyle, nextStyle, setGradient, setEco, setUnit,
-    get speed() { return speed; },
-    get style() { return style; },
-    STYLES: STYLES.slice(),
+    setAccent: (hex) => setGradient(hex, hex),
+    getSpeed: () => speed,
+    getStyle: () => style,
+    STYLES
   };
-  global.ElioSpeedo = api;
 
+  global.ElioSpeedo = api;
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => { if (!root && document.querySelector('.elio-speedo')) init(); });
-  } else if (document.querySelector('.elio-speedo')) {
+    document.addEventListener('DOMContentLoaded', () => { if (!root) init(); });
+  } else {
     init();
   }
 })(window);

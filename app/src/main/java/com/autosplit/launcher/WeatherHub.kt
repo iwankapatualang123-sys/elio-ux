@@ -84,3 +84,4 @@ class WeatherHub {
         else -> "partly" to "Berawan"
     }
 }
+
