@@ -1,0 +1,119 @@
+/* Penyesuaian AutoSplit: bingkai polos mengikuti warna aplikasi, garis tebal ujung bulat,
+   kotak sensor transparan melayang. Dimuat setelah elio-speedo.css. */
+.elio-speedo .speedo-card.cockpit-glass {
+  border: 4px solid var(--theme-accent) !important;
+  border-radius: 18px !important;
+  background: linear-gradient(160deg, rgba(14, 20, 30, 0.55), rgba(6, 9, 14, 0.72)) !important;
+}
+.elio-speedo .speedo-card.cockpit-glass::before { display: none; }
+
+.elio-speedo .elio-wing {
+  fill: rgba(12, 18, 28, 0.38);
+  stroke: var(--theme-accent);
+  stroke-width: 3.2px;
+  stroke-opacity: 1;
+  stroke-linejoin: round;
+}
+.elio-speedo .elio-wing-top {
+  stroke: var(--theme-accent);
+  stroke-width: 5px;
+  stroke-linecap: round;
+  opacity: 1;
+}
+.elio-speedo .elio-frame {
+  stroke: var(--theme-accent);
+  stroke-width: 2.5px;
+  stroke-opacity: 1;
+}
+.elio-speedo .elio-frame-line {
+  stroke: var(--theme-accent);
+  stroke-width: 3px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.elio-speedo.eco-mode .elio-wing { filter: none; }
+
+/* Efek warna kecepatan di area tengah: naik dari bawah sesuai kecepatan (diatur autosplit.js). */
+.elio-speedo .as-speed-fill {
+  position: absolute; left: 27%; right: 27%; bottom: 0; height: 100%;
+  transform: translateY(100%); will-change: transform;
+  background: linear-gradient(to top,
+    rgba(var(--theme-accent-rgb), 0.55) 0%,
+    rgba(var(--theme-accent-2-rgb), 0.32) 70%,
+    rgba(var(--theme-accent-2-rgb), 0.08) 100%);
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 22%, #000 78%, transparent);
+  mask-image: linear-gradient(to right, transparent, #000 22%, #000 78%, transparent);
+  transition: none;
+}
+.elio-speedo .as-speed-fill::before {
+  content: ''; position: absolute; left: 8%; right: 8%; top: 0; height: 4px; border-radius: 4px;
+  background: rgb(var(--theme-accent-2-rgb));
+  box-shadow: 0 0 16px rgba(var(--theme-accent-2-rgb), 0.9), 0 0 4px #fff;
+}
+
+/* Equalizer latar (eq.js) */
+.elio-speedo .as-eq { position: absolute; inset: 0; width: 100%; height: 100%; }
+
+/* Bingkai speedometer mode Berjalan: cincin gradasi; sudutnya (--as-a) diputar autosplit.js ~20 fps. */
+.elio-speedo.as-frame-run .speedo-card.cockpit-glass { border: 0 !important; }
+.elio-speedo .as-ring { display: none; }
+.elio-speedo.as-frame-run .as-ring {
+  display: block; position: absolute; inset: 0; padding: 5px; border-radius: 18px; z-index: 30; pointer-events: none;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.12) 30%, rgba(255, 255, 255, 0.05)),
+    conic-gradient(from var(--as-a, 0deg),
+    var(--theme-accent), var(--theme-accent-2) 50%, var(--theme-accent));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude;
+}
+
+/* Mode Berjalan: bingkai dalam (kotak sensor, pod, siku) ikut gradasi berputar. */
+.elio-speedo.as-frame-run .elio-wing,
+.elio-speedo.as-frame-run .elio-wing-top,
+.elio-speedo.as-frame-run .elio-frame,
+.elio-speedo.as-frame-run .elio-frame-line { stroke: url(#asRunGrad); }
+/* Gerakan lampu LED Honda lebih lembut */
+.elio-speedo [id^="hondaLed"] { transition: opacity 0.35s ease-out, filter 0.35s ease-out; }
+
+/* Performa: efek drop-shadow pada elemen SVG/teks dihitung ulang setiap kali jarum bergerak,
+   sangat berat untuk tablet lama. Dimatikan; glow latar dibuat layer terpisah. */
+.elio-speedo [style*="drop-shadow"],
+.elio-speedo .speedo-card [id^="cluster_"] > svg,
+.elio-speedo #speedDisplay,
+.elio-speedo #hondaSpeedDisplay { filter: none !important; }
+.elio-speedo .speedo-glow { will-change: opacity; }
+.elio-speedo [id^="hondaLed"] { transition: opacity 0.35s ease-out; }
+
+/* Glossy mewah (mode Diam): bingkai utama dan bingkai dalam bergradasi krom, terang di atas. */
+.elio-speedo:not(.as-frame-run) .speedo-card.cockpit-glass {
+  border: 4px solid transparent !important;
+  background:
+    linear-gradient(160deg, rgba(14, 20, 30, 0.55), rgba(6, 9, 14, 0.72)) padding-box,
+    linear-gradient(180deg, #FFFFFF 0%, var(--theme-accent) 10%, var(--theme-accent) 55%,
+      var(--theme-accent-2) 92%, rgba(255, 255, 255, 0.7) 100%) border-box !important;
+}
+.elio-speedo:not(.as-frame-run) .elio-wing,
+.elio-speedo:not(.as-frame-run) .elio-frame,
+.elio-speedo:not(.as-frame-run) .elio-frame-line { stroke: url(#asGloss); }
+
+/* Angka kecepatan Honda: satuan di bawah angka agar angka memakai seluruh lebar bingkai tengah. */
+.elio-speedo #cluster_honda .skew-speed { flex-direction: column; align-items: center; }
+.elio-speedo #cluster_honda .skew-speed > span:last-child { margin-left: 0; margin-top: 2px; font-size: 0.9rem; }
+
+/* Panel sensor BMW: kartu kaca kecil bergaris glossy di bawah angka kecepatan. */
+.elio-speedo .as-m3-grid {
+  margin-top: 14px; width: 66%; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+}
+.elio-speedo .as-m3-cell {
+  display: flex; flex-direction: column; align-items: flex-start; min-width: 0;
+  padding: 5px 9px 6px; border-radius: 10px; border: 2px solid transparent;
+  background:
+    linear-gradient(160deg, rgba(14, 20, 30, 0.6), rgba(6, 9, 14, 0.75)) padding-box,
+    linear-gradient(180deg, #FFFFFF 0%, var(--theme-accent) 14%, var(--theme-accent) 60%, var(--theme-accent-2) 100%) border-box;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.55);
+}
+.elio-speedo .as-m3-cell span { font: 700 8.5px/1.2 ui-monospace, monospace; letter-spacing: .08em; color: #94A3B8; white-space: nowrap; }
+.elio-speedo .as-m3-cell b { display: flex; align-items: baseline; gap: 3px; min-width: 0; max-width: 100%;
+  font: 900 15px/1.25 ui-monospace, monospace; color: #F8FAFC; white-space: nowrap; overflow: hidden; }
+.elio-speedo .as-m3-cell i { font-style: normal; overflow: hidden; text-overflow: ellipsis; }
+.elio-speedo .as-m3-cell small { font-size: 9px; font-weight: 700; color: var(--theme-accent); }
+@media (max-height: 560px) { .elio-speedo .as-m3-extra { display: none; } .elio-speedo .as-m3-grid { margin-top: 8px; } }

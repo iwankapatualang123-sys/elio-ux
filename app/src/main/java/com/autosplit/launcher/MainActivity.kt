@@ -1,0 +1,1114 @@
+package com.autosplit.launcher
+
+import android.Manifest
+import android.app.Activity
+import android.app.AlertDialog
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.graphics.Color
+import android.graphics.Point
+import android.graphics.Rect
+import android.graphics.Typeface
+import android.hardware.SensorManager
+import android.os.Build
+import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.provider.Settings
+import android.text.TextUtils
+import android.view.Gravity
+import android.view.View
+import android.view.ViewGroup
+import android.view.WindowManager
+import android.widget.FrameLayout
+import android.widget.GridLayout
+import android.widget.HorizontalScrollView
+import android.widget.LinearLayout
+import android.widget.ScrollView
+import android.widget.SeekBar
+import android.widget.TextClock
+import android.widget.TextView
+import android.widget.Toast
+import java.util.Locale
+import kotlin.math.roundToInt
+
+class MainActivity : Activity() {
+
+    private lateinit var prefs: Prefs
+    private lateinit var hub: SensorHub
+    private lateinit var link: LinkHub
+    private lateinit var engine: PanelEngine
+
+    private val handler = Handler(Looper.getMainLooper())
+
+    private lateinit var root: LinearLayout
+    private lateinit var holder: FrameLayout
+    private lateinit var gpsText: TextView
+    private lateinit var ramText: TextView
+    private lateinit var indicator: StatusIndicator
+    private lateinit var labelA: TextView
+    private lateinit var labelB: TextView
+    private lateinit var labelStart: TextView
+    private lateinit var overlay: SlotOverlay
+
+    private var gauge: SpeedoView? = null
+    private val eq = EqHub { gauge?.setBands(it) }
+    private var eqWarned = false
+    private var lowBatWarned = 100
+    private var lowBatDialog: AlertDialog? = null
+    private val animViews = ArrayList<View>()
+    private var lastFrameNs = 0L
+
+    /** Menggambar ulang semua bingkai ~25 kali per detik selama mode Berjalan aktif. */
+    private val frameCallback = object : android.view.Choreographer.FrameCallback {
+        override fun doFrame(frameTimeNanos: Long) {
+            if (!Ambient.running) return
+            if (frameTimeNanos - lastFrameNs >= if (Ambient.lite) 80_000_000L else 40_000_000L) {
+                lastFrameNs = frameTimeNanos
+                overlay.invalidate()
+                for (v in animViews) v.invalidate()
+            }
+            android.view.Choreographer.getInstance().postFrameCallback(this)
+        }
+    }
+    private val tileValues = HashMap<String, TextView>()
+    private val tileBoxes = HashMap<String, View>()
+
+    private var panelsActive: Boolean
+        get() = prefs.panelsActive
+        set(v) {
+            prefs.panelsActive = v
+        }
+    private var tick = 0
+    private var lastBrightness = -2f
+
+    private val poll = object : Runnable {
+        override fun run() {
+            refresh()
+            handler.postDelayed(this, 250L)
+        }
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        prefs = Prefs(this)
+        Pal.accent = prefs.accent
+        Pal.accent2 = prefs.accent2
+        hub = SensorHub(this)
+        link = LinkHub(this)
+        engine = PanelEngine(this, prefs)
+        if (prefs.keepScreenOn) window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        buildUi()
+        if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), REQ_LOCATION)
+        }
+        handleIntent(intent)
+        handler.postDelayed({ askAdminOnce() }, 2500L)
+    }
+
+    /** Minta izin kunci layar sekali, supaya pop-up bisa mengunci otomatis saat timer habis. */
+    private fun askAdminOnce() {
+        if (!prefs.askOnUnplug || prefs.adminAsked || ShutdownActivity.isAdminActive(this) || isFinishing) return
+        prefs.adminAsked = true
+        AlertDialog.Builder(this, DIALOG)
+            .setTitle("Izinkan kunci layar")
+            .setMessage("Agar tablet terkunci otomatis saat charger dicabut dan timer habis, AutoSplit butuh izin kunci layar. Izin ini hanya untuk mengunci layar.")
+            .setPositiveButton("Izinkan") { _, _ -> ShutdownActivity.requestAdmin(this, REQ_ADMIN) }
+            .setNegativeButton("Nanti", null)
+            .showLeft()
+    }
+
+    private fun AlertDialog.Builder.showLeft(): AlertDialog {
+        val d = show()
+        place(d)
+        return d
+    }
+
+    /** Dialog ditaruh di kolom speedometer kiri atas, supaya tidak tertutup jendela Maps/YouTube. */
+    @Suppress("DEPRECATION")
+    private fun place(d: AlertDialog) {
+        val w = d.window ?: return
+        val real = Point()
+        windowManager.defaultDisplay.getRealSize(real)
+        val col = if (panelsActive && !isInMultiWindowMode) real.x * prefs.leftPercent / 100 else real.x * 45 / 100
+        w.setGravity(Gravity.TOP or Gravity.START)
+        val lp = w.attributes
+        lp.x = dp(14)
+        lp.y = dp(40)
+        lp.width = (col - dp(28)).coerceAtLeast(dp(300))
+        w.attributes = lp
+    }
+
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handleIntent(intent)
+    }
+
+    private fun handleIntent(i: Intent?) {
+        if (i?.getBooleanExtra(EXTRA_CHARGE, false) == true && prefs.autoStartPanels) {
+            handler.postDelayed({ startPanels() }, 1500L)
+        }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        hub.start()
+        link.start()
+        gauge?.onResume()
+        applyEffects()
+        syncChargeService()
+        updateSlotButtons()
+        applyInsets()
+        handler.post(poll)
+    }
+
+    override fun onStop() {
+        eq.stop()
+        android.view.Choreographer.getInstance().removeFrameCallback(frameCallback)
+        gauge?.onPause()
+        handler.removeCallbacks(poll)
+        hub.stop()
+        link.stop()
+        super.onStop()
+    }
+
+    override fun onDestroy() {
+        handler.removeCallbacksAndMessages(null)
+        gauge?.destroy()
+        gauge = null
+        super.onDestroy()
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == REQ_LOCATION) {
+            hub.stop()
+            hub.start()
+        }
+        if (requestCode == REQ_AUDIO) {
+            if (hasAudioPermission()) {
+                applyEffects()
+            } else {
+                prefs.eqMode = 0
+                setGauge()
+                toast("Equalizer butuh izin audio untuk membaca musik yang diputar")
+            }
+        }
+    }
+
+    @Suppress("OVERRIDE_DEPRECATION")
+    override fun onBackPressed() {
+        // Launcher: tombol kembali tidak menutup layar utama.
+    }
+
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        if (hasFocus) immersive()
+    }
+
+    @Suppress("DEPRECATION")
+    private fun immersive() {
+        window.decorView.systemUiVisibility =
+            View.SYSTEM_UI_FLAG_LAYOUT_STABLE or
+                View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or
+                View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or
+                View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or
+                View.SYSTEM_UI_FLAG_FULLSCREEN or
+                View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+    }
+
+    // ---------- UI ----------
+
+    private fun dp(v: Int): Int = (v * resources.displayMetrics.density + 0.5f).toInt()
+
+    private fun glass(accent: Boolean = false) = GlassDrawable(resources.displayMetrics.density, 14f, accent)
+
+    private fun toast(msg: String) = Toast.makeText(this, msg, Toast.LENGTH_LONG).show()
+
+    private fun f(fmt: String, vararg a: Any): String = String.format(Locale.US, fmt, *a)
+
+    private fun buildUi() {
+        root = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            background = HudBackground(resources.displayMetrics.density)
+        }
+
+        val status = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            background = glass()
+            elevation = dp(6).toFloat()
+            setPadding(dp(16), dp(8), dp(16), dp(8))
+        }
+        animViews.add(status)
+        val clock = TextClock(this).apply {
+            format24Hour = "HH:mm"
+            format12Hour = "HH:mm"
+            textSize = 20f
+            setTextColor(Pal.accent)
+            typeface = Typeface.create("sans-serif-condensed", Typeface.BOLD)
+        }
+        gpsText = statusText(Gravity.CENTER)
+        ramText = statusText(Gravity.CENTER)
+        indicator = StatusIndicator(this)
+        status.addView(clock, LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT))
+        status.addView(gpsText, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.5f))
+        status.addView(ramText, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 0.8f))
+        status.addView(indicator, LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT))
+
+        holder = FrameLayout(this)
+
+        val grid = GridLayout(this).apply { columnCount = 4 }
+        addTile(grid, T_HEAD, "ARAH")
+        addTile(grid, T_ALT, "KETINGGIAN")
+        addTile(grid, T_G, "GAYA G")
+        addTile(grid, T_BAT, "SUHU BATERAI")
+        addTile(grid, T_TRIP, "JARAK TRIP")
+        addTile(grid, T_MAX, "KEC. MAKS")
+        addTile(grid, T_AVG, "RATA-RATA")
+        addTile(grid, T_TIME, "WAKTU JALAN")
+        addTile(grid, T_PRESS, "TEKANAN")
+        addTile(grid, T_LUX, "CAHAYA")
+        tileBoxes[T_TRIP]?.setOnLongClickListener {
+            hub.resetTrip()
+            toast("Trip direset")
+            true
+        }
+
+        val dock = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            setPadding(dp(2), dp(4), dp(2), dp(6))
+        }
+        val (tileApps, _) = dockButton(DockIconView.APPS, "Aplikasi", false, { drawer() })
+        val (tileA, lblA) = dockButton(DockIconView.MAPS, "Maps", false, { launchSlot(true) }, { pickApp(true); true })
+        val (tileB, lblB) = dockButton(DockIconView.YOUTUBE, "YouTube", false, { launchSlot(false) }, { pickApp(false); true })
+        val (tileStart, lblStart) = dockButton(DockIconView.START, "Mulai", true, { startPanels() }, { askStyle(); true })
+        val (tileAtur, _) = dockButton(DockIconView.SETTINGS, "Atur", false, { showSettings() })
+        labelA = lblA
+        labelB = lblB
+        labelStart = lblStart
+        addDockTile(dock, tileApps)
+        addDockTile(dock, tileA)
+        addDockTile(dock, tileB)
+        addDockTile(dock, tileStart)
+        addDockTile(dock, tileAtur)
+
+        val full = ViewGroup.LayoutParams.MATCH_PARENT
+        val wrap = ViewGroup.LayoutParams.WRAP_CONTENT
+        root.addView(status, LinearLayout.LayoutParams(full, wrap).apply { setMargins(dp(3), dp(3), dp(3), dp(3)) })
+        root.addView(holder, LinearLayout.LayoutParams(full, 0, 1f).apply { setMargins(dp(3), dp(3), dp(3), dp(3)) })
+        if (prefs.showTiles) root.addView(grid, LinearLayout.LayoutParams(full, wrap))
+        root.addView(dock, LinearLayout.LayoutParams(full, wrap))
+        overlay = SlotOverlay(this)
+        val frame = FrameLayout(this)
+        frame.addView(root, FrameLayout.LayoutParams(full, full))
+        frame.addView(overlay, FrameLayout.LayoutParams(full, full))
+        setContentView(frame)
+
+        setGauge()
+    }
+
+    private fun statusText(g: Int) = TextView(this).apply {
+        textSize = 13f
+        setTextColor(Pal.MUTED)
+        gravity = g
+        maxLines = 1
+        ellipsize = TextUtils.TruncateAt.END
+    }
+
+    private fun addTile(grid: GridLayout, key: String, label: String) {
+        val box = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER
+            background = glass()
+            elevation = dp(6).toFloat()
+            setPadding(dp(8), dp(8), dp(8), dp(8))
+        }
+        animViews.add(box)
+        val l = TextView(this).apply {
+            text = label
+            setTextColor(Pal.MUTED)
+            textSize = 10.5f
+            gravity = Gravity.CENTER
+            typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
+        }
+        val v = TextView(this).apply {
+            text = "—"
+            setTextColor(Pal.TEXT)
+            textSize = 17f
+            gravity = Gravity.CENTER
+            maxLines = 1
+            typeface = Typeface.create("sans-serif-condensed", Typeface.BOLD)
+        }
+        box.addView(l)
+        box.addView(v)
+        val lp = GridLayout.LayoutParams().apply {
+            width = 0
+            height = ViewGroup.LayoutParams.WRAP_CONTENT
+            columnSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f)
+            rowSpec = GridLayout.spec(GridLayout.UNDEFINED)
+            setMargins(dp(3), dp(3), dp(3), dp(3))
+        }
+        grid.addView(box, lp)
+        tileValues[key] = v
+        tileBoxes[key] = box
+    }
+
+    private fun dockButton(
+        iconKind: Int,
+        label: String,
+        accent: Boolean = false,
+        onClick: () -> Unit,
+        onLongClick: (() -> Boolean)? = null
+    ): Pair<LinearLayout, TextView> {
+        val box = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER
+            background = glass(accent)
+            elevation = dp(6).toFloat()
+            setPadding(dp(4), dp(7), dp(4), dp(6))
+            isClickable = true
+            isFocusable = true
+            setOnClickListener { onClick() }
+            if (onLongClick != null) setOnLongClickListener { onLongClick() }
+            animViews.add(this)
+        }
+        val ico = DockIconView(this, iconKind)
+        val tv = TextView(this).apply {
+            text = label
+            setTextColor(if (accent) Pal.accent else Pal.TEXT)
+            textSize = 11f
+            gravity = Gravity.CENTER
+            maxLines = 1
+            ellipsize = TextUtils.TruncateAt.END
+            typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
+            setPadding(0, dp(3), 0, 0)
+        }
+        box.addView(ico)
+        box.addView(tv)
+        return box to tv
+    }
+
+    private fun addDockTile(row: LinearLayout, v: View) {
+        row.addView(v, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f).apply {
+            setMargins(dp(3), dp(2), dp(3), dp(2))
+        })
+    }
+
+    private fun setGauge() {
+        val g = gauge ?: SpeedoView(this)
+        g.configure(
+            prefs.gaugeStyle, prefs.accent, prefs.accent2, prefs.eco, prefs.eqMode,
+            prefs.frameRunning, FRAME_SPEEDS[prefs.frameSpeed.coerceIn(0, FRAME_SPEEDS.size - 1)],
+            prefs.ecoFrame, prefs.ecoEq, prefs.useMph
+        )
+        if (g.parent == null) holder.addView(g, FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
+        gauge = g
+    }
+
+    private fun askStyle() {
+        if (moving()) {
+            toast(LOCK_MSG)
+            return
+        }
+        AlertDialog.Builder(this, DIALOG)
+            .setTitle("Pilih Tema / Gaya Speedometer")
+            .setItems(STYLE_NAMES) { _, which ->
+                prefs.gaugeStyle = which
+                setGauge()
+                toast("Tema: ${STYLE_NAMES[which]}")
+            }
+            .setNegativeButton("Batal", null)
+            .showLeft()
+    }
+
+    private fun updateSlotButtons() {
+        labelStart.text = "Mulai ${prefs.panelCount}x"
+        labelA.text = engine.labelOf(prefs.panelA)
+        labelB.text = engine.labelOf(prefs.panelB)
+    }
+
+    /**
+     * Saat jendela aplikasi aktif, kolom speedometer disejajarkan dengan jendela: tepi atas dan
+     * bawah kartu sama persis dengan tepi jendela, sehingga garis putih keduanya bersambung.
+     */
+    @Suppress("DEPRECATION")
+    private fun applyInsets() {
+        val real = Point()
+        windowManager.defaultDisplay.getRealSize(real)
+        val reserve = panelsActive && !isInMultiWindowMode
+        if (reserve) {
+            val right = real.x * (100 - prefs.leftPercent) / 100
+            val top = dp(14) + dp(SlotOverlay.STRIP_DP.toInt()) - dp(3)
+            val bottom = dp(14) + dp(SlotOverlay.PAD_DP.toInt()) - dp(3)
+            root.setPadding(dp(11), top, right, bottom)
+        } else {
+            root.setPadding(dp(14), dp(12), dp(14), dp(8))
+        }
+        updateOverlay(reserve)
+    }
+
+    private fun updateOverlay(show: Boolean) {
+        if (!show) {
+            overlay.setSlots(emptyList())
+            return
+        }
+        val list = ArrayList<SlotOverlay.Slot>()
+        list.add(SlotOverlay.Slot(engine.boundsA(), "A  " + engine.labelOf(prefs.panelA).uppercase(Locale.US)))
+        if (prefs.panelCount >= 3) {
+            list.add(SlotOverlay.Slot(engine.boundsB(), "B  " + engine.labelOf(prefs.panelB).uppercase(Locale.US)))
+        }
+        overlay.setSlots(list)
+    }
+
+    // ---------- Pembaruan data ----------
+
+    private fun moving(): Boolean = hub.currentSpeedMps() > 1.4f
+
+    private fun cardinal(d: Float): String {
+        val n = arrayOf("U", "TL", "T", "TG", "S", "BD", "B", "BL")
+        return n[((d + 22.5f) / 45f).toInt() % 8]
+    }
+
+    private fun refresh() {
+        val mph = prefs.useMph
+        val k = if (mph) 2.23694f else 3.6f
+        val unitName = if (mph) "mph" else "km/j"
+        gauge?.setSpeed(hub.currentSpeedMps() * k)
+        gauge?.setG(hub.latG)
+
+        tick++
+        if (tick % 8 == 1) {
+            hub.readBattery()
+            checkBattery()
+            link.poll()
+            applyInsets()
+            ramText.text = "RAM ${hub.ramFreeMb()} MB"
+        }
+        indicator.set(link.cellLevel, link.wifiLevel, hub.batteryPct, hub.charging, tick)
+        gpsText.text = hub.gpsStatus()
+
+        val h = if (!hub.headingDeg.isNaN()) hub.headingDeg else hub.gpsBearing
+        tileValues[T_HEAD]?.text = if (h.isNaN()) "—" else "${h.roundToInt() % 360}° ${cardinal(h)}"
+
+        val alt = when {
+            !hub.mslAltitude().isNaN() -> hub.mslAltitude()
+            !hub.pressureHpa.isNaN() ->
+                SensorManager.getAltitude(SensorManager.PRESSURE_STANDARD_ATMOSPHERE, hub.pressureHpa).toDouble()
+            !hub.altitudeM.isNaN() -> hub.altitudeM
+            else -> Double.NaN
+        }
+        tileValues[T_ALT]?.text = when {
+            alt.isNaN() -> "—"
+            mph -> f("%.0f ft", alt * 3.28084)
+            else -> f("%.0f mdpl", alt)
+        }
+
+        tileValues[T_G]?.text = if (hub.hasLinear || hub.hasAccel) f("%.2f G", hub.gForce) else "—"
+        tileValues[T_BAT]?.text = if (hub.batteryTempC.isNaN()) "—" else f("%.0f°C", hub.batteryTempC)
+
+        val dist = hub.tripMeters / 1000.0 * (if (mph) 0.621371 else 1.0)
+        tileValues[T_TRIP]?.text = f("%.1f %s", dist, if (mph) "mi" else "km")
+        tileValues[T_MAX]?.text = f("%.0f %s", hub.tripMaxMps * k, unitName)
+        tileValues[T_AVG]?.text =
+            if (hub.tripMovingSec > 5.0) f("%.0f %s", (hub.tripMeters / hub.tripMovingSec).toFloat() * k, unitName) else "—"
+        val t = hub.tripMovingSec.toLong()
+        tileValues[T_TIME]?.text = f("%d:%02d:%02d", t / 3600, (t % 3600) / 60, t % 60)
+
+        tileBoxes[T_PRESS]?.visibility = if (hub.hasPressure) View.VISIBLE else View.GONE
+        tileValues[T_PRESS]?.text = if (hub.pressureHpa.isNaN()) "—" else f("%.0f hPa", hub.pressureHpa)
+        tileBoxes[T_LUX]?.visibility = if (hub.hasLight) View.VISIBLE else View.GONE
+        tileValues[T_LUX]?.text = if (hub.lux < 0f) "—" else f("%.0f lx", hub.lux)
+
+        if (tick % 4 == 1) pushLive(h, alt)
+        autoBrightness()
+    }
+
+    /** Data sensor untuk panel samping template speedometer. */
+    private fun pushLive(heading: Float, alt: Double) {
+        val g = gauge ?: return
+        val fix = hub.gpsStatus().startsWith("GPS ")
+        val dot = if (fix) "\uD83D\uDFE2" else "\uD83D\uDFE1"
+        val t = hub.tripMovingSec.toLong()
+        val o = org.json.JSONObject()
+        o.put("trip", f("%.1f", hub.tripMeters / 1000.0))
+        o.put("alt", if (alt.isNaN()) "--" else f("%.0f", alt))
+        o.put("head", if (heading.isNaN()) "--" else "${cardinalEn(heading)} ${heading.roundToInt() % 360}\u00B0")
+        o.put("sats", "$dot ${hub.satsUsed}/${hub.satsVisible} SATS")
+        o.put("gnss", if (fix) "$dot 3D FIX (${hub.satsUsed})" else "$dot GNSS SEARCH")
+        o.put("max", f("%.0f", hub.tripMaxMps * 3.6f))
+        o.put("avg", if (hub.tripMovingSec > 5.0) f("%.0f", hub.tripMeters / hub.tripMovingSec * 3.6) else "0")
+        o.put("btemp", if (hub.batteryTempC.isNaN()) "--" else f("%.0f", hub.batteryTempC))
+        o.put("time", f("%d:%02d:%02d", t / 3600, (t % 3600) / 60, t % 60))
+        o.put("acc", if (hub.charging) "ACTIVE" else "OFF")
+        o.put("bat", if (hub.batteryPct >= 0) hub.batteryPct.toString() else "--")
+        g.live(o.toString())
+    }
+
+    private fun cardinalEn(d: Float): String {
+        val n = arrayOf("N", "NE", "E", "SE", "S", "SW", "W", "NW")
+        return n[((d + 22.5f) / 45f).toInt() % 8]
+    }
+
+    private fun autoBrightness() {
+        if (!prefs.autoDim || hub.lux < 0f) {
+            setBrightness(-1f)
+            return
+        }
+        val b = when {
+            hub.lux < 6f -> 0.18f
+            hub.lux < 40f -> 0.4f
+            else -> -1f
+        }
+        setBrightness(b)
+    }
+
+    private fun setBrightness(b: Float) {
+        if (b == lastBrightness) return
+        lastBrightness = b
+        val lp = window.attributes
+        lp.screenBrightness = b
+        window.attributes = lp
+    }
+
+    // ---------- Panel ----------
+
+    private fun launchSlot(isA: Boolean) {
+        val pkg = if (isA) prefs.panelA else prefs.panelB
+        if (!engine.isInstalled(pkg)) {
+            toast("Aplikasi belum dipilih atau belum terpasang. Tekan lama tombol ini untuk memilih.")
+            return
+        }
+        val bounds = if (isA) engine.boundsA() else engine.boundsB()
+        val ok = engine.launch(pkg, if (engine.freeformUsable()) bounds else null, isInMultiWindowMode)
+        if (!ok) toast("Gagal membuka aplikasi")
+    }
+
+    private fun startPanels() {
+        val a = prefs.panelA
+        val b = prefs.panelB
+        if (!engine.isInstalled(a) && !engine.isInstalled(b)) {
+            toast("Pilih aplikasi panel dulu: tekan lama tombol A atau B.")
+            return
+        }
+        val first = if (engine.isInstalled(a)) a else b
+        if (engine.freeformUsable()) {
+            val wanted = if (prefs.panelCount >= 3) {
+                listOf(b to engine.boundsB(), a to engine.boundsA())
+            } else {
+                listOf(first to engine.boundsA())
+            }
+            val targets = wanted.filter { engine.isInstalled(it.first) }
+            panelsActive = true
+            applyInsets()
+            var delay = 0L
+            for ((pkg, bounds) in targets) {
+                handler.postDelayed({ engine.launch(pkg, bounds, false) }, delay)
+                delay += 900L
+            }
+            toast("Menjalankan speedometer + ${targets.size} aplikasi")
+            return
+        }
+        if (!isInMultiWindowMode) {
+            toast("Masuk ke split-screen dulu: tekan lama tombol Recent lalu pilih AutoSplit, atau aktifkan \"Paksa mode freeform\" di ATUR.")
+            return
+        }
+        engine.launch(first, null, true)
+        if (prefs.panelCount >= 3) {
+            toast("Tablet ini belum mendukung freeform, jadi baru 2 jendela. Coba aktifkan \"Paksa mode freeform\" di ATUR.")
+        } else {
+            toast("Mode 2 jendela: speedometer + 1 aplikasi. Ketuk A atau B untuk mengganti aplikasi di sisi kanan.")
+        }
+    }
+
+    /** Peringatan baterai lemah di bawah 20% dan 10% saat tidak dicas; hilang sendiri saat dicas. */
+    private fun checkBattery() {
+        val pct = hub.batteryPct
+        if (pct < 0) return
+        if (hub.charging || pct >= 25) {
+            lowBatWarned = 100
+            lowBatDialog?.dismiss()
+            lowBatDialog = null
+            return
+        }
+        val threshold = when {
+            pct < 10 -> 10
+            pct < 20 -> 20
+            else -> return
+        }
+        if (threshold >= lowBatWarned) return
+        lowBatWarned = threshold
+        lowBatDialog?.dismiss()
+        lowBatDialog = AlertDialog.Builder(this, DIALOG)
+            .setTitle("Baterai lemah: $pct%")
+            .setMessage("Baterai tablet tinggal $pct%. Colokkan pengisi daya mobil agar unit tidak mati.")
+            .setPositiveButton("Oke", null)
+            .showLeft()
+    }
+
+    private fun hasAudioPermission(): Boolean =
+        checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
+
+    /** Bingkai layar berjalan/diam dan equalizer, mengikuti pengaturan dan Mode Hemat. */
+    private fun applyEffects() {
+        Ambient.periodMs = FRAME_SPEEDS[prefs.frameSpeed.coerceIn(0, FRAME_SPEEDS.size - 1)] * 1000L
+        Ambient.running = prefs.frameRunning
+        Ambient.lite = prefs.ecoFrame
+        val choreo = android.view.Choreographer.getInstance()
+        choreo.removeFrameCallback(frameCallback)
+        if (Ambient.running) choreo.postFrameCallback(frameCallback)
+        overlay.invalidate()
+        for (v in animViews) v.invalidate()
+        if (prefs.eqMode > 0 && hasAudioPermission()) {
+            if (!eq.start(prefs.ecoEq) && !eqWarned) {
+                eqWarned = true
+                toast("Equalizer tidak didukung di perangkat ini")
+            }
+        } else {
+            eq.stop()
+        }
+    }
+
+    /** Petunjuk memberi izin Penghemat daya lewat ADB (sekali saja, butuh komputer). */
+    private fun showAdbHelp() {
+        val tv = TextView(this).apply {
+            setTextIsSelectable(true)
+            setTextColor(Pal.TEXT)
+            textSize = 14f
+            setPadding(dp(24), dp(12), dp(24), dp(4))
+            text = "Android hanya mengizinkan Penghemat daya diatur aplikasi yang diberi izin khusus. " +
+                "Lakukan sekali saja:\n\n" +
+                "1. Aktifkan Opsi pengembang lalu Debugging USB di tablet.\n" +
+                "2. Sambungkan tablet ke komputer yang sudah terpasang ADB (platform-tools).\n" +
+                "3. Jalankan perintah ini di komputer:\n\n" + PowerSaver.ADB_COMMAND + "\n\n" +
+                "Setelah itu buka lagi menu ini; tulisan \"perlu izin\" akan hilang."
+        }
+        AlertDialog.Builder(this, DIALOG)
+            .setTitle("Izin Penghemat daya")
+            .setView(ScrollView(this).apply { addView(tv) })
+            .setPositiveButton("Oke", null)
+            .showLeft()
+    }
+
+    private fun syncChargeService() {
+        if (prefs.needsChargeService) ChargeService.start(this) else ChargeService.stop(this)
+    }
+
+    private fun openSettings(action: String) {
+        try {
+            startActivity(Intent(action))
+        } catch (e: Exception) {
+            toast("Pengaturan tidak bisa dibuka")
+        }
+    }
+
+    // ---------- Dialog ----------
+
+    private fun launchables(): List<Pair<String, String>> {
+        val pm = packageManager
+        val q = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
+        return pm.queryIntentActivities(q, 0)
+            .map { it.activityInfo.packageName to it.loadLabel(pm).toString() }
+            .filter { it.first != packageName }
+            .distinctBy { it.first }
+            .sortedBy { it.second.lowercase() }
+    }
+
+    private fun pickApp(forA: Boolean) {
+        if (moving()) {
+            toast(LOCK_MSG)
+            return
+        }
+        val list = launchables()
+        AlertDialog.Builder(this, DIALOG)
+            .setTitle(if (forA) "Pilih aplikasi panel A" else "Pilih aplikasi panel B")
+            .setItems(list.map { it.second }.toTypedArray()) { _, i ->
+                if (forA) prefs.panelA = list[i].first else prefs.panelB = list[i].first
+                updateSlotButtons()
+            }
+            .setNegativeButton("Batal", null)
+            .showLeft()
+    }
+
+    private fun drawer() {
+        if (moving()) {
+            toast(LOCK_MSG)
+            return
+        }
+        val list = launchables()
+        AlertDialog.Builder(this, DIALOG)
+            .setTitle("Semua aplikasi")
+            .setItems(list.map { it.second }.toTypedArray()) { _, i ->
+                engine.launch(list[i].first, null, isInMultiWindowMode)
+            }
+            .setNegativeButton("Tutup", null)
+            .showLeft()
+    }
+
+    private fun onOff(b: Boolean) = if (b) "aktif" else "mati"
+
+    private fun gradName(): String {
+        for (i in GRAD_NAMES.indices) {
+            if (GRAD_COLORS[i * 2] == prefs.accent && GRAD_COLORS[i * 2 + 1] == prefs.accent2) return GRAD_NAMES[i]
+        }
+        return "Kustom"
+    }
+
+    private fun showSettings() {
+        if (moving()) {
+            toast(LOCK_MSG)
+            return
+        }
+        val entries = listOf<Pair<String, () -> Unit>>(
+            "Tema / Gaya Speedometer: ${STYLE_NAMES[prefs.gaugeStyle.coerceIn(0, STYLE_NAMES.size - 1)]}" to { askStyle() },
+            "Mulai ${prefs.panelCount} Jendela Split (Maps + YouTube)" to { startPanels() },
+            "Mode Layar Penuh (tutup ruang split)" to {
+                panelsActive = false
+                applyInsets()
+                toast("Mode layar penuh aktif")
+            },
+            "Sensor & Diagnostik Perangkat" to { showSensors() },
+            "Reset Trip (jarak, kec. maks, waktu jalan)" to {
+                hub.resetTrip()
+                toast("Data trip direset")
+            },
+            "Pilih Aplikasi Panel A (${engine.labelOf(prefs.panelA)})" to { pickApp(true) },
+            "Pilih Aplikasi Panel B (${engine.labelOf(prefs.panelB)})" to { pickApp(false) },
+            "Satuan: ${if (prefs.useMph) "mph" else "km/jam"}" to {
+                prefs.useMph = !prefs.useMph
+                setGauge()
+                showSettings()
+            },
+            "Warna gradasi: ${gradName()}" to { askAccent() },
+            "Hemat speedometer (grid & lampu template diam): ${onOff(prefs.eco)}" to {
+                prefs.eco = !prefs.eco
+                setGauge()
+                applyEffects()
+                showSettings()
+            },
+            "Equalizer musik: ${EQ_NAMES[prefs.eqMode.coerceIn(0, EQ_NAMES.size - 1)]}" to {
+                prefs.eqMode = (prefs.eqMode + 1) % EQ_NAMES.size
+                if (prefs.eqMode > 0 && !hasAudioPermission()) {
+                    requestPermissions(arrayOf(Manifest.permission.RECORD_AUDIO), REQ_AUDIO)
+                }
+                setGauge()
+                applyEffects()
+                showSettings()
+            },
+            "Bingkai (layar, speedometer, kartu, menu): ${if (prefs.frameRunning) "Berjalan (gradasi)" else "Diam"}" to {
+                prefs.frameRunning = !prefs.frameRunning
+                setGauge()
+                applyEffects()
+                showSettings()
+            },
+            "Hemat bingkai (lebih jarang digambar, tanpa pendar): ${onOff(prefs.ecoFrame)}" to {
+                prefs.ecoFrame = !prefs.ecoFrame
+                setGauge()
+                applyEffects()
+                showSettings()
+            },
+            "Hemat equalizer (16 batang, 15 fps): ${onOff(prefs.ecoEq)}" to {
+                prefs.ecoEq = !prefs.ecoEq
+                setGauge()
+                applyEffects()
+                showSettings()
+            },
+            "Kecepatan warna berjalan: ${FRAME_SPEED_NAMES[prefs.frameSpeed.coerceIn(0, FRAME_SPEED_NAMES.size - 1)]}" to {
+                prefs.frameSpeed = (prefs.frameSpeed + 1) % FRAME_SPEEDS.size
+                setGauge()
+                applyEffects()
+                showSettings()
+            },
+            "Tampilkan kotak sensor di bawah: ${onOff(prefs.showTiles)}" to {
+                prefs.showTiles = !prefs.showTiles
+                recreate()
+            },
+            "Lebar panel speedometer: ${prefs.leftPercent}%" to { askRatio() },
+            "Jumlah jendela: ${prefs.panelCount} (speedometer + ${prefs.panelCount - 1} aplikasi)" to {
+                prefs.panelCount = if (prefs.panelCount >= 3) 2 else 3
+                updateSlotButtons()
+                applyInsets()
+                showSettings()
+            },
+            "Susunan: ${if (prefs.entertainmentLayout) "Hiburan (video besar)" else "Navigasi (peta besar)"}" to {
+                prefs.entertainmentLayout = !prefs.entertainmentLayout
+                applyInsets()
+                showSettings()
+            },
+            "Aktif otomatis saat dicas: ${onOff(prefs.autoOnCharge)}" to {
+                prefs.autoOnCharge = !prefs.autoOnCharge
+                syncChargeService()
+                showSettings()
+            },
+            "Mulai panel otomatis saat dicas: ${onOff(prefs.autoStartPanels)}" to {
+                prefs.autoStartPanels = !prefs.autoStartPanels
+                showSettings()
+            },
+            "Pop-up matikan unit saat charger dicabut: ${onOff(prefs.askOnUnplug)}" to {
+                prefs.askOnUnplug = !prefs.askOnUnplug
+                syncChargeService()
+                showSettings()
+            },
+            "Izin kunci layar: ${if (ShutdownActivity.isAdminActive(this)) "sudah aktif" else "belum aktif (ketuk)"}" to {
+                if (ShutdownActivity.isAdminActive(this)) toast("Izin kunci layar sudah aktif")
+                else ShutdownActivity.requestAdmin(this, REQ_ADMIN)
+            },
+            "Coba pop-up matikan unit" to { ShutdownActivity.show(this) },
+            "Hemat daya saat terkunci: ${onOff(prefs.powerSaveOnLock)}${if (prefs.powerSaveOnLock && !PowerSaver.canControl(this)) " (perlu izin, ketuk)" else ""}" to {
+                if (prefs.powerSaveOnLock && !PowerSaver.canControl(this)) {
+                    showAdbHelp()
+                } else {
+                    prefs.powerSaveOnLock = !prefs.powerSaveOnLock
+                    syncChargeService()
+                    if (prefs.powerSaveOnLock && !PowerSaver.canControl(this)) showAdbHelp() else showSettings()
+                }
+            },
+            "Bluetooth nyala saat layar on: ${onOff(prefs.btOnScreenOn)}" to {
+                prefs.btOnScreenOn = !prefs.btOnScreenOn
+                syncChargeService()
+                showSettings()
+            },
+            "Wi-Fi nyala saat layar on: ${onOff(prefs.wifiOnScreenOn)}" to {
+                prefs.wifiOnScreenOn = !prefs.wifiOnScreenOn
+                syncChargeService()
+                showSettings()
+            },
+            "Kecerahan otomatis (sensor cahaya): ${onOff(prefs.autoDim)}" to {
+                prefs.autoDim = !prefs.autoDim
+                showSettings()
+            },
+            "Layar tetap menyala: ${onOff(prefs.keepScreenOn)}" to {
+                prefs.keepScreenOn = !prefs.keepScreenOn
+                if (prefs.keepScreenOn) window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                else window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                showSettings()
+            },
+            "Paksa mode freeform (percobaan): ${onOff(prefs.forceFreeform)}" to {
+                prefs.forceFreeform = !prefs.forceFreeform
+                showSettings()
+            },
+            "Jadikan launcher utama" to { openSettings(Settings.ACTION_HOME_SETTINGS) }
+        )
+        AlertDialog.Builder(this, DIALOG)
+            .setTitle("Pengaturan")
+            .setItems(entries.map { it.first }.toTypedArray()) { _, which -> entries[which].second() }
+            .setNegativeButton("Tutup", null)
+            .showLeft()
+    }
+
+    private fun askAccent() {
+        val names = GRAD_NAMES + arrayOf("Roda warna: warna 1 (awal)", "Roda warna: warna 2 (akhir)")
+        AlertDialog.Builder(this, DIALOG)
+            .setTitle("Warna gradasi")
+            .setItems(names) { _, which ->
+                when {
+                    which < GRAD_NAMES.size -> {
+                        prefs.accent = GRAD_COLORS[which * 2]
+                        prefs.accent2 = GRAD_COLORS[which * 2 + 1]
+                        recreate()
+                    }
+                    which == GRAD_NAMES.size -> askHue(false)
+                    else -> askHue(true)
+                }
+            }
+            .setNegativeButton("Batal", null)
+            .showLeft()
+    }
+
+    private fun askHue(second: Boolean) {
+        val start = if (second) prefs.accent2 else prefs.accent
+        val wheel = ColorWheelView(this).apply { setColor(start) }
+        val bar = View(this)
+        fun paintBar(c: Int) {
+            bar.background = android.graphics.drawable.GradientDrawable(
+                android.graphics.drawable.GradientDrawable.Orientation.LEFT_RIGHT,
+                if (second) intArrayOf(prefs.accent, c) else intArrayOf(c, prefs.accent2)
+            ).apply { cornerRadius = dp(6).toFloat() }
+        }
+        paintBar(start)
+        wheel.onChange = { paintBar(it) }
+        val bright = SeekBar(this).apply {
+            max = 80
+            progress = ((wheel.brightness - 0.2f) * 100).toInt().coerceIn(0, 80)
+        }
+        bright.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(s: SeekBar?, p: Int, fromUser: Boolean) {
+                if (fromUser) wheel.brightness = 0.2f + p / 100f
+            }
+
+            override fun onStartTrackingTouch(s: SeekBar?) {}
+
+            override fun onStopTrackingTouch(s: SeekBar?) {}
+        })
+        val hint = TextView(this).apply {
+            text = "Kecerahan"
+            setTextColor(Pal.MUTED)
+            textSize = 12f
+        }
+        val box = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER_HORIZONTAL
+            setPadding(dp(20), dp(12), dp(20), 0)
+            addView(wheel)
+            addView(bar, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(18)).apply { topMargin = dp(14) })
+            addView(hint, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { topMargin = dp(10) })
+            addView(bright, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
+        }
+        AlertDialog.Builder(this, DIALOG)
+            .setTitle(if (second) "Warna 2 (akhir gradasi)" else "Warna 1 (awal gradasi)")
+            .setView(ScrollView(this).apply { addView(box) })
+            .setPositiveButton("Simpan") { _, _ ->
+                if (second) prefs.accent2 = wheel.color() else prefs.accent = wheel.color()
+                recreate()
+            }
+            .setNegativeButton("Batal", null)
+            .showLeft()
+    }
+
+    private fun askRatio() {
+        val label = TextView(this).apply {
+            text = "${prefs.leftPercent}%"
+            setTextColor(Pal.TEXT)
+            gravity = Gravity.CENTER
+            textSize = 18f
+        }
+        val sb = SeekBar(this).apply {
+            max = 35
+            progress = prefs.leftPercent - 25
+        }
+        sb.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(s: SeekBar?, p: Int, fromUser: Boolean) {
+                label.text = "${p + 25}%"
+            }
+
+            override fun onStartTrackingTouch(s: SeekBar?) {}
+
+            override fun onStopTrackingTouch(s: SeekBar?) {}
+        })
+        val box = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(24), dp(16), dp(24), 0)
+            addView(label)
+            addView(sb)
+        }
+        AlertDialog.Builder(this, DIALOG)
+            .setTitle("Lebar panel speedometer (25 sampai 60%)")
+            .setView(box)
+            .setPositiveButton("Simpan") { _, _ ->
+                prefs.leftPercent = sb.progress + 25
+                applyInsets()
+                showSettings()
+            }
+            .setNegativeButton("Batal", null)
+            .showLeft()
+    }
+
+    private fun systemInfo(): String = buildString {
+        append("Perangkat: ${Build.MANUFACTURER} ${Build.MODEL}\n")
+        append("Android ${Build.VERSION.RELEASE} (API ${Build.VERSION.SDK_INT})\n")
+        append("RAM: bebas ${hub.ramFreeMb()} MB dari ${hub.ramTotalMb()} MB\n")
+        append("Multi-window sekarang: ${if (isInMultiWindowMode) "ya" else "tidak"}\n")
+        append("Fitur freeform sistem: ${if (engine.systemHasFreeform()) "ada" else "tidak ada"}\n")
+        append("Paksa freeform: ${onOff(prefs.forceFreeform)}\n")
+        append("GPS: ${hub.gpsStatus()}\n")
+        append("Izin Penghemat daya (ADB): ${if (PowerSaver.canControl(this@MainActivity)) "sudah" else "belum"}\n")
+        append("Ketinggian: ${when {
+            !hub.mslAltitude().isNaN() -> f("%.0f mdpl (NMEA, di atas permukaan laut)", hub.mslAltitude())
+            !hub.pressureHpa.isNaN() -> "dari barometer (perkiraan mdpl)"
+            !hub.altitudeM.isNaN() -> f("%.0f m (GPS elipsoid, belum mdpl)", hub.altitudeM)
+            else -> "belum ada"
+        }}\n")
+        append("Sinyal seluler: ${if (link.cellLevel < 0) "tidak terbaca" else "${link.cellLevel} dari 4"}\n")
+        append("Sinyal Wi-Fi: ${if (link.wifiLevel < 0) "tidak terhubung" else "${link.wifiLevel} dari 4"}\n")
+        val compass = when {
+            hub.hasRotation -> "rotation vector"
+            hub.hasCompassFallback -> "akselerometer + magnetometer"
+            else -> "tidak ada"
+        }
+        append("Kompas: $compass\n")
+        append("Gaya G: ${if (hub.hasLinear) "linear acceleration" else if (hub.hasAccel) "akselerometer" else "tidak ada"}\n")
+        append("Sensor cahaya: ${if (hub.hasLight) "ada" else "tidak ada"}\n")
+        append("Barometer: ${if (hub.hasPressure) "ada" else "tidak ada"}\n")
+        append("Suhu ruang: ${if (hub.hasAmbientTemp) "ada" else "tidak ada"}\n")
+        append("\n--- Semua sensor (nilai langsung) ---\n")
+    }
+
+    private fun showSensors() {
+        if (moving()) {
+            toast(LOCK_MSG)
+            return
+        }
+        val live = SensorLive(this)
+        live.start()
+        val tv = TextView(this).apply {
+            typeface = Typeface.MONOSPACE
+            textSize = 12f
+            setTextColor(Pal.TEXT)
+            setPadding(dp(20), dp(8), dp(20), dp(8))
+        }
+        val sv = ScrollView(this).apply { addView(tv) }
+        val loop = object : Runnable {
+            override fun run() {
+                tv.text = systemInfo() + live.render()
+                handler.postDelayed(this, 500L)
+            }
+        }
+        val dlg = AlertDialog.Builder(this, DIALOG)
+            .setTitle("Sensor dan diagnostik")
+            .setView(sv)
+            .setPositiveButton("Tutup", null)
+            .create()
+        dlg.setOnDismissListener {
+            handler.removeCallbacks(loop)
+            live.stop()
+        }
+        dlg.show()
+        place(dlg)
+        handler.post(loop)
+    }
+
+    companion object {
+        const val EXTRA_CHARGE = "charge"
+
+        private const val REQ_LOCATION = 100
+        private const val REQ_ADMIN = 101
+        private const val REQ_AUDIO = 102
+        private val EQ_NAMES = arrayOf("Mati", "Batang", "Gelombang")
+        /** Detik per satu putaran warna berjalan. */
+        private val FRAME_SPEEDS = intArrayOf(14, 9, 6, 3)
+        private val FRAME_SPEED_NAMES = arrayOf("Sangat lambat (14 dtk)", "Lambat (9 dtk)", "Sedang (6 dtk)", "Cepat (3 dtk)")
+        private const val DIALOG = android.R.style.Theme_Material_Dialog_Alert
+        private const val LOCK_MSG = "Dikunci saat mobil bergerak"
+        private val STYLE_NAMES = arrayOf(
+            "Lexus F-Sport (Klasik)",
+            "BMW M3 (Klasik)",
+            "Mazda KODO (Klasik)",
+            "Honda Type R (Klasik)",
+            "ELIO Neon (Innova Reborn)",
+            "BMW M Sport (Innova Reborn)"
+        )
+        private val GRAD_NAMES = arrayOf("Cyber Neon", "Aurora", "Plasma", "Sunset", "Lava GR", "Gold", "Ice", "Toxic")
+        private val GRAD_COLORS = intArrayOf(
+            Color.parseColor("#00E5FF"), Color.parseColor("#A855F7"),
+            Color.parseColor("#00F5A0"), Color.parseColor("#00D9F5"),
+            Color.parseColor("#F72585"), Color.parseColor("#4361EE"),
+            Color.parseColor("#FF6A00"), Color.parseColor("#EE0979"),
+            Color.parseColor("#FF1E56"), Color.parseColor("#FFAC41"),
+            Color.parseColor("#F7971E"), Color.parseColor("#FFD200"),
+            Color.parseColor("#74EBD5"), Color.parseColor("#9FACE6"),
+            Color.parseColor("#B7FF00"), Color.parseColor("#00E5FF")
+        )
+
+        private const val T_HEAD = "head"
+        private const val T_ALT = "alt"
+        private const val T_G = "g"
+        private const val T_BAT = "bat"
+        private const val T_TRIP = "trip"
+        private const val T_MAX = "max"
+        private const val T_AVG = "avg"
+        private const val T_TIME = "time"
+        private const val T_PRESS = "press"
+        private const val T_LUX = "lux"
+    }
+}

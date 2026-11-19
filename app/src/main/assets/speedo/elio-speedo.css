@@ -1,0 +1,454 @@
+/* =============================================================================
+   ELIO SPEEDO — Template desain 4 mode speedometer
+   Lexus F-Sport · BMW M3 · Mazda KODO · Honda Type R
+   Gradasi 2 warna, kaca 3D, grid cyberpunk reaktif kecepatan, glow, Mode Hemat.
+
+   Semua aturan dibungkus .elio-speedo, jadi tidak bentrok dengan CSS aplikasi lain.
+   Pasang: <link rel="stylesheet" href="elio-speedo.css"> + markup elio-speedo.html
+           + <script src="elio-speedo.js"></script>
+   Warna: ubah lewat ElioSpeedo.setGradient('#00E5FF', '#A855F7'), atau set variabel
+          --theme-accent / --theme-accent-2 (+ versi -rgb) pada .elio-speedo.
+   ============================================================================= */
+.elio-speedo ::before, .elio-speedo::before, .elio-speedo ::after, .elio-speedo::after { box-sizing: border-box; border-width: 0; border-style: solid; border-color: rgba(255,255,255,0.1); }
+    .elio-speedo { line-height: 1.5; margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
+    .elio-speedo button, .elio-speedo input, .elio-speedo select { font: inherit; color: inherit; margin: 0; }
+    .elio-speedo button { background: transparent; cursor: pointer; }
+    .elio-speedo svg, .elio-speedo img { display: block; vertical-align: middle; }
+    .elio-speedo .hidden { display: none !important; }
+    .elio-speedo .flex { display: flex; }
+    .elio-speedo .absolute { position: absolute; }
+    .elio-speedo .relative { position: relative; }
+    .elio-speedo .inset-0 { top: 0; right: 0; bottom: 0; left: 0; }
+    .elio-speedo .w-full { width: 100%; } .elio-speedo .h-full { height: 100%; } .elio-speedo .w-1\.5 { width: 0.375rem; } .elio-speedo .h-1\.5 { height: 0.375rem; }
+    .elio-speedo .min-h-0 { min-height: 0; } .elio-speedo .min-h-\[300px\] { min-height: 0; }
+    .elio-speedo .flex-col { flex-direction: column; } .elio-speedo .flex-1 { flex: 1 1 0%; }
+    .elio-speedo .items-center { align-items: center; } .elio-speedo .items-baseline { align-items: baseline; }
+    .elio-speedo .justify-center { justify-content: center; } .elio-speedo .justify-between { justify-content: space-between; } .elio-speedo .gap-1 { gap: 0.25rem; } .elio-speedo .gap-1\.5 { gap: 0.375rem; } .elio-speedo .my-0 { margin-top: 0; margin-bottom: 0; } .elio-speedo .my-1 { margin-top: 0.25rem; margin-bottom: 0.25rem; } .elio-speedo .mt-1 { margin-top: 0.25rem; } .elio-speedo .mt-3 { margin-top: 0.75rem; } .elio-speedo .ml-1 { margin-left: 0.25rem; } .elio-speedo .px-2 { padding-left: 0.5rem; padding-right: 0.5rem; } .elio-speedo .px-3 { padding-left: 0.75rem; padding-right: 0.75rem; }
+    .elio-speedo .py-0 { padding-top: 0; padding-bottom: 0; }
+    .elio-speedo .py-0\.5 { padding-top: 0.125rem; padding-bottom: 0.125rem; } .elio-speedo .py-2 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+    .elio-speedo .overflow-hidden { overflow: hidden; }
+    .elio-speedo .pointer-events-none { pointer-events: none; }
+    .elio-speedo .font-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+    .elio-speedo .text-center { text-align: center; }
+    .elio-speedo .text-\[8px\] { font-size: 8px; } .elio-speedo .text-\[9px\] { font-size: 9px; } .elio-speedo .text-xs { font-size: 0.75rem; line-height: 1rem; }
+    .elio-speedo .text-sm { font-size: 0.875rem; line-height: 1.25rem; }
+    .elio-speedo .text-6xl { font-size: 3.75rem; line-height: 1; }
+    .elio-speedo .font-bold { font-weight: 700; } .elio-speedo .font-black { font-weight: 900; } .elio-speedo .tracking-tighter { letter-spacing: -0.05em; } .elio-speedo .tracking-widest { letter-spacing: 0.1em; }
+    .elio-speedo .text-white { color: #ffffff; }
+    .elio-speedo .text-slate-300 { color: #cbd5e1; } .elio-speedo .text-slate-400 { color: #94a3b8; } .elio-speedo .text-\[var\(--theme-accent\)\] { color: var(--theme-accent); } .elio-speedo .bg-black\/60 { background-color: rgba(0,0,0,0.6); }
+    .elio-speedo .bg-emerald-400 { background-color: #34d399; }
+    .elio-speedo .bg-\[var\(--theme-accent\)\] { background-color: var(--theme-accent); }
+    .elio-speedo .bg-\[var\(--theme-accent\)\]\/20 { background-color: rgba(var(--theme-accent-rgb,0,229,255),0.2); }
+    .elio-speedo .rounded { border-radius: 0.25rem; } .elio-speedo .rounded-xl { border-radius: 0.75rem; }
+    .elio-speedo .rounded-full { border-radius: 9999px; }
+    .elio-speedo .border { border-width: 1px; } .elio-speedo .border-white\/10 { border-color: rgba(255,255,255,0.1); }
+    .elio-speedo .border-\[var\(--theme-accent\)\]\/60 { border-color: var(--theme-accent); }
+    .elio-speedo .shadow-md { box-shadow: 0 4px 6px -1px rgba(0,0,0,0.6); }
+    .elio-speedo .transition-all { transition: all 0.2s cubic-bezier(0.4,0,0.2,1); }
+    .elio-speedo .transition-transform { transition: transform 0.25s ease; }
+    .elio-speedo .duration-150 { transition-duration: 150ms; }
+    .elio-speedo .duration-300 { transition-duration: 300ms; }
+    .elio-speedo .animate-pulse { animation: tw-pulse 2s cubic-bezier(0.4,0,0.6,1) infinite; }
+    .elio-speedo .animate-ping { animation: tw-ping 1.5s cubic-bezier(0,0,0.2,1) infinite; }
+    @keyframes tw-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
+    @keyframes tw-ping { 75%, 100% { transform: scale(1.8); opacity: 0; } }
+    @media (min-width: 640px) { .elio-speedo .sm\:min-h-\[330px\] { min-height: 0; } .elio-speedo .sm\:text-7xl { font-size: 4.5rem; line-height: 1; }
+    }
+  
+
+    @keyframes pulse-glow {
+      0%, 100% { opacity: 0.4; filter: drop-shadow(0 0 8px var(--theme-glow)); }
+      50% { opacity: 0.9; filter: drop-shadow(0 0 20px var(--theme-glow)); }
+    }
+    @keyframes laser-sweep {
+      0% { transform: translateY(-100%); opacity: 0; }
+      50% { opacity: 0.8; }
+      100% { transform: translateY(100%); opacity: 0; }
+    }
+
+    .elio-speedo {
+      --theme-accent: #00E5FF;
+      --theme-accent-rgb: 0, 229, 255;
+      --theme-glow: rgba(0, 229, 255, 0.5);
+      --theme-bg-subtle: rgba(0, 229, 255, 0.08);
+      --theme-border: rgba(0, 229, 255, 0.35);
+      --theme-accent-2: #A855F7;
+      --theme-accent-2-rgb: 168, 85, 247;
+      --theme-gradient: linear-gradient(135deg, #00E5FF, #A855F7);
+      --speed-ratio: 0;
+      --card-bg-start: rgba(14, 18, 26, 0.90);
+      --card-bg-end: rgba(7, 9, 14, 0.97);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --card-glow: rgba(0, 0, 0, 0.6);
+      --bg-cockpit-main: #06080E;
+      --bg-outer-main: #020408;
+      --bg-cockpit-fog: rgba(0, 229, 255, 0.05);
+    }
+    .elio-speedo .cockpit-glass {
+      background: linear-gradient(135deg, var(--card-bg-start) 0%, var(--card-bg-end) 100%) !important;
+      border: 1.5px solid var(--card-border) !important;
+      box-shadow: 
+        0 24px 50px -12px var(--card-glow),
+        0 8px 20px -4px rgba(0, 0, 0, 0.75),
+        0 0 0 1.5px rgba(0, 0, 0, 0.92),
+        0 -1px 0 1px rgba(255, 255, 255, 0.16),
+        inset 0 1.5px 1.5px 0 rgba(255, 255, 255, 0.42),
+        inset 0 -2.5px 3.5px 0 rgba(0, 0, 0, 0.85),
+        inset 1.5px 0 2px 0 rgba(255, 255, 255, 0.12),
+        inset -1.5px 0 2px 0 rgba(0, 0, 0, 0.55);
+      transition: background 0.35s ease, border-color 0.35s ease, box-shadow 0.35s ease;
+    }
+    .elio-speedo .cockpit-glass:not(.fixed):not(.absolute) {
+      position: relative;
+    }
+
+    .elio-speedo .cockpit-glass::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2.5px;
+      background: linear-gradient(90deg, 
+        transparent 0%, 
+        rgba(255, 255, 255, 0.15) 8%,
+        var(--theme-accent) 25%,
+        #ffffff 50%,
+        var(--theme-accent-2) 75%,
+        rgba(255, 255, 255, 0.15) 92%,
+        transparent 100%
+      );
+      box-shadow: 0 1px 10px var(--theme-glow), 0 0 4px #ffffff;
+      border-radius: 12px 12px 0 0;
+      pointer-events: none;
+      z-index: 20;
+    }
+
+    .elio-speedo .cockpit-glass::after {
+      content: '';
+      position: absolute;
+      top: 0; right: 0; bottom: 0; left: 0;
+      border-radius: inherit;
+      background: radial-gradient(
+        circle 400px at 50% 0%,
+        rgba(255, 255, 255, 0.12) 0%,
+        rgba(var(--theme-accent-rgb, 0, 229, 255), 0.05) 45%,
+        transparent 75%
+      );
+      pointer-events: none;
+      opacity: 0.75;
+      z-index: 15;
+    }
+
+    .elio-speedo .cockpit-glass:hover {
+      border-color: var(--theme-border) !important;
+      box-shadow: 
+        0 28px 60px -10px var(--card-glow),
+        0 12px 28px -4px rgba(0, 0, 0, 0.8),
+        0 0 0 1.5px rgba(0, 0, 0, 0.95),
+        0 -1px 0 1.5px rgba(255, 255, 255, 0.24),
+        0 0 24px var(--theme-bg-subtle),
+        inset 0 2px 2px 0 rgba(255, 255, 255, 0.55),
+        inset 0 -3px 4px 0 rgba(0, 0, 0, 0.9),
+        inset 2px 0 2.5px 0 rgba(255, 255, 255, 0.18),
+        inset -2px 0 2.5px 0 rgba(0, 0, 0, 0.6);
+    }
+    .elio-speedo .cockpit-glass:hover .card-3d-corner {
+      opacity: 1;
+      transform: scale(1.15);
+    }
+    .elio-speedo .skew-speed {
+      transform: skewX(-10deg);
+    }
+    .elio-speedo #speedDisplay, .elio-speedo #hondaSpeedDisplay { font-size: clamp(3.75rem, 16vh, 9rem) !important; line-height: 1 !important; }
+    .elio-speedo .speedo-card {
+      isolation: isolate;
+      border: 1.5px solid transparent !important;
+      background:
+        linear-gradient(135deg, var(--card-bg-start), var(--card-bg-end)) padding-box,
+        linear-gradient(135deg, rgba(var(--theme-accent-rgb), 0.75), rgba(255, 255, 255, 0.08) 45%, rgba(var(--theme-accent-2-rgb), 0.75)) border-box !important;
+    }
+    .elio-speedo .speedo-fx { position: absolute; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; border-radius: inherit; }
+    .elio-speedo .speedo-glow {
+      position: absolute; left: 50%; top: 46%; width: 78%; height: 92%;
+      transform: translate(-50%, -50%); border-radius: 50%;
+      background: radial-gradient(closest-side,
+        rgba(var(--theme-accent-rgb), 0.34),
+        rgba(var(--theme-accent-2-rgb), 0.16) 55%,
+        transparent 100%);
+      opacity: calc(0.45 + 0.55 * var(--speed-ratio));
+    }
+    .elio-speedo .speedo-grid {
+      position: absolute; left: -50%; right: -50%; bottom: 0; height: 58%; overflow: hidden;
+      -webkit-mask-image: linear-gradient(to top, rgba(0, 0, 0, 0.95), transparent 95%);
+      mask-image: linear-gradient(to top, rgba(0, 0, 0, 0.95), transparent 95%);
+    }
+    .elio-speedo .speedo-grid-plane {
+      position: absolute; left: 0; right: 0; bottom: 0; height: 240%;
+      transform-origin: 50% 100%; transform: perspective(300px) rotateX(58deg);
+      background-image:
+        linear-gradient(rgba(var(--theme-accent-rgb), 0.6) 2px, transparent 2px),
+        linear-gradient(90deg, rgba(var(--theme-accent-2-rgb), 0.55) 2px, transparent 2px);
+      background-size: 54px 54px;
+      animation: speedoGridFlow var(--grid-duration, 2s) linear infinite;
+      animation-play-state: var(--grid-state, paused);
+      will-change: transform;
+    }
+    @keyframes speedoGridFlow {
+      from { transform: perspective(300px) rotateX(58deg) translateY(0); }
+      to { transform: perspective(300px) rotateX(58deg) translateY(54px); }
+    }
+    .elio-speedo .speedo-vignette {
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse at 50% 40%, transparent 60%, rgba(0, 0, 0, 0.4) 100%);
+    }
+    .elio-speedo .speedo-card [id^="cluster_"] { transform: perspective(1600px) rotateX(7deg); transform-origin: 50% 65%; }
+    .elio-speedo .speedo-card [id^="cluster_"] > svg { filter: drop-shadow(0 14px 18px rgba(0, 0, 0, 0.65)); }
+    .elio-speedo #speedDisplay, .elio-speedo #hondaSpeedDisplay {
+      background: linear-gradient(180deg, #ffffff 15%, var(--theme-accent) 60%, var(--theme-accent-2) 100%);
+      -webkit-background-clip: text; background-clip: text;
+      -webkit-text-fill-color: transparent; color: transparent;
+      text-shadow: none !important;
+      filter: drop-shadow(0 0 12px rgba(var(--theme-accent-rgb), 0.55));
+    }
+    .elio-speedo.eco-mode *, .elio-speedo.eco-mode *::before, .elio-speedo.eco-mode *::after {
+      animation: none !important;
+      transition: none !important;
+    }
+    .elio-speedo.eco-mode .speedo-card [id^="cluster_"] > svg { filter: none !important; }
+    .elio-speedo.eco-mode .speedo-grid-plane {
+      animation: speedoGridFlow var(--grid-duration, 2s) linear infinite !important;
+      animation-play-state: var(--grid-state, paused) !important;
+    }
+
+/* Ukuran wadah: template mengisi tinggi induknya */
+.elio-speedo { display: flex; flex-direction: column; width: 100%; height: 100%; min-height: 320px; color: #f1f5f9; background: transparent; }
+.elio-speedo .speedo-card { flex: 1 1 auto; }
+
+
+/* =============================================================================
+   ELIO UX — 2 TEMA BARU (ELIO NEON & BMW M SPORT — TOYOTA INNOVA REBORN)
+   Ringan untuk Samsung Galaxy Tab A6 (Android 8.1, RAM 2 GB): tanpa blur berat.
+   ============================================================================= */
+.elio-speedo .as-new-theme {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  padding: 4px 4px 2px;
+  overflow: hidden;
+}
+.elio-speedo .as-elio-theme {
+  background: radial-gradient(circle at 50% 42%, rgba(30, 64, 175, 0.28) 0%, rgba(11, 14, 38, 0.85) 56%, rgba(5, 7, 20, 0.92) 100%);
+  border-radius: 12px;
+}
+.elio-speedo .as-bmw-theme {
+  background:
+    radial-gradient(ellipse 46% 52% at 18% 46%, rgba(0, 175, 255, 0.28) 0%, rgba(14, 74, 180, 0.10) 48%, transparent 72%),
+    radial-gradient(ellipse 46% 52% at 82% 46%, rgba(255, 30, 66, 0.26) 0%, rgba(153, 27, 27, 0.10) 48%, transparent 72%),
+    linear-gradient(180deg, rgba(6, 12, 29, 0.90) 0%, rgba(3, 6, 15, 0.95) 100%);
+  border-radius: 12px;
+}
+.elio-speedo.eco-mode .as-elio-theme,
+.elio-speedo.eco-mode .as-bmw-theme {
+  background: rgba(6, 9, 18, 0.92);
+}
+.elio-speedo .as-top-chips {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 4px;
+  position: relative;
+  z-index: 5;
+}
+.elio-speedo .as-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 9px;
+  border: 1px solid rgba(var(--theme-accent-2-rgb, 168, 85, 247), 0.55);
+  border-radius: 10px;
+  background: rgba(12, 16, 40, 0.84);
+}
+.elio-speedo .as-bmw-chip {
+  border-color: rgba(56, 189, 248, 0.45);
+  background: rgba(10, 18, 36, 0.86);
+}
+.elio-speedo .as-chip-ico {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+.elio-speedo .as-chip small {
+  display: block;
+  font-size: 7.5px;
+  letter-spacing: 0.08em;
+  color: #94a3b8;
+  font-weight: 600;
+  line-height: 1.1;
+}
+.elio-speedo .as-chip b {
+  display: block;
+  font-size: 12px;
+  color: #ffffff;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.25;
+}
+.elio-speedo .as-bmw-m-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px 9px;
+  border-radius: 8px;
+  background: rgba(10, 18, 36, 0.86);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+}
+.elio-speedo .as-bmw-m-badge i {
+  display: inline-block;
+  width: 6px;
+  height: 12px;
+  transform: skewX(-24deg);
+  border-radius: 1px;
+}
+.elio-speedo .as-bmw-m-badge span {
+  font-size: 13px;
+  font-weight: 900;
+  font-style: italic;
+  color: #ffffff;
+  margin-left: 2px;
+}
+.elio-speedo .as-stage {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  margin: -10px -4px -2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.elio-speedo .as-stage-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.elio-speedo .as-car-wrap {
+  position: absolute;
+  bottom: 4%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 24%;
+  max-width: 130px;
+  min-width: 64px;
+  pointer-events: none;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 4;
+}
+.elio-speedo .as-car-glow {
+  position: absolute;
+  bottom: -2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 96%;
+  height: 14px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(var(--theme-accent-rgb, 0, 229, 255), 0.45) 0%, rgba(255, 46, 85, 0.22) 55%, transparent 80%);
+}
+.elio-speedo .as-car-glow-bmw {
+  background: radial-gradient(ellipse, rgba(0, 210, 255, 0.48) 0%, rgba(255, 30, 66, 0.30) 58%, transparent 82%);
+}
+.elio-speedo .as-car-img {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+}
+.elio-speedo .as-sensor-strip {
+  position: relative;
+  z-index: 6;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 4px;
+  padding: 2px 2px 3px;
+}
+.elio-speedo .as-s-pill {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 2px;
+  border-radius: 8px;
+  background: rgba(10, 16, 38, 0.86);
+  border: 1px solid rgba(var(--theme-accent-rgb, 56, 189, 248), 0.32);
+  min-width: 0;
+}
+.elio-speedo .as-s-pill small {
+  font-size: 7px;
+  letter-spacing: 0.06em;
+  color: #94a3b8;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.elio-speedo .as-s-pill b {
+  font-size: 10.5px;
+  color: #f8fafc;
+  font-weight: 700;
+  margin-top: 1px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+.elio-speedo .as-s-pill b.as-accent {
+  color: var(--theme-accent);
+}
+.elio-speedo .as-bmw-metrics {
+  position: relative;
+  z-index: 6;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 5px;
+  padding: 2px 2px 3px;
+}
+.elio-speedo .as-bmw-card {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 6px;
+  border-radius: 9px;
+  border: 1px solid rgba(56, 189, 248, 0.38);
+  background: linear-gradient(180deg, rgba(14, 24, 46, 0.90), rgba(7, 13, 26, 0.95));
+  min-width: 0;
+}
+.elio-speedo .as-m-ico {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+}
+.elio-speedo .as-bmw-card small {
+  display: block;
+  font-size: 7px;
+  color: #94a3b8;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.elio-speedo .as-bmw-card b {
+  display: block;
+  font-size: 10px;
+  color: #ffffff;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
