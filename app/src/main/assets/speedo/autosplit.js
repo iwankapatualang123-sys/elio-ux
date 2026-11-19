@@ -209,7 +209,8 @@
     resetAll();
     var box = document.getElementById('cluster_' + window.ElioSpeedo.style);
     if (!box) return;
-    if (box.id === 'cluster_elio' || box.id === 'cluster_bmw_m') return;
+    // Semua 6 tema HD sudah responsif full-press via Flexbox + SVG viewBox
+    if (box.classList.contains('as-new-theme')) return;
     var svg = box.querySelector('svg');
     if (!svg) return;
     var w = svg.clientWidth || svg.getBoundingClientRect().width;

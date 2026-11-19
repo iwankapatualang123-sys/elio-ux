@@ -5,8 +5,6 @@
 <link rel="stylesheet" href="autosplit.css">
 <style>html,body{margin:0;padding:0;height:100%;background:transparent;overflow:hidden}.elio-speedo{min-height:0}</style>
 </head><body>
-<!-- ELIO SPEEDO TEMPLATE: 4 mode speedometer (Lexus F-Sport, BMW M3, Mazda KODO, Honda Type R).
-     Butuh elio-speedo.css + elio-speedo.js. Ganti mode: ElioSpeedo.setStyle('lfa'|'m3'|'mazda'|'honda'). -->
 <div class="elio-speedo" id="elioSpeedo">
   <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
     <defs>
@@ -25,805 +23,424 @@
         <stop offset="0" style="stop-color: var(--theme-accent)" />
         <stop offset="1" style="stop-color: var(--theme-accent-2)" />
       </linearGradient>
-      <linearGradient id="elioSpeedTextGrad" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0.2" stop-color="#FFFFFF" />
-        <stop offset="0.7" style="stop-color: var(--theme-accent)" />
-        <stop offset="1" style="stop-color: var(--theme-accent-2)" />
-      </linearGradient>
     </defs>
   </svg>
+
   <section class="speedo-card cockpit-glass rounded-xl px-2 py-2 flex flex-col justify-between relative overflow-hidden min-h-0 h-full">
     <div class="speedo-fx" aria-hidden="true">
       <div class="speedo-glow"></div>
       <div class="speedo-grid"><div class="speedo-grid-plane"></div></div>
       <div class="speedo-vignette"></div>
     </div>
-                <!-- STYLE 1 (ACTIVE / DEFAULT): LEXUS F-SPORT / LFA DYNAMIC MECHANICAL-DIGITAL HALO RING (FULL-BLEED 440x340) -->
-        <div id="cluster_lfa" class="relative flex flex-col items-center justify-center my-0 py-0 w-full flex-1 min-h-[300px] sm:min-h-[330px]">
-          <svg class="w-full h-full flex-1" viewBox="0 0 440 340" preserveAspectRatio="xMidYMid meet">
-            <defs>
-              <radialGradient id="titaniumRim" cx="50%" cy="50%" r="50%">
-                <stop offset="68%" stop-color="#1E293B" />
-                <stop offset="82%" stop-color="#475569" />
-                <stop offset="90%" stop-color="#94A3B8" />
-                <stop offset="95%" stop-color="#334155" />
-                <stop offset="100%" stop-color="#0F172A" />
-              </radialGradient>
-              <radialGradient id="smokedLens" cx="50%" cy="50%" r="50%">
-                <stop offset="0%" stop-color="#0F172A" stop-opacity="0.6" />
-                <stop offset="80%" stop-color="#030712" stop-opacity="0.95" />
-                <stop offset="100%" stop-color="#000000" stop-opacity="1" />
-              </radialGradient>
-            </defs>
 
-            <!-- LEFT FLANKING F-SPORT FULL-HEIGHT WING (y=6 to 334) -->
-            <g transform="translate(6, 6)">
-              <rect class="elio-wing" x="0" y="0" width="112" height="328" rx="10" fill="rgba(8,12,22,0.65)" stroke="rgba(255,255,255,0.08)" stroke-width="1" />
-              <path class="elio-wing-top" d="M 16,0 L 96,0" stroke="url(#elioAccentGrad)" stroke-width="2.5" opacity="0.9" />
-              
-              <text x="12" y="24" fill="#64748B" font-size="7.5" font-family="monospace" font-weight="bold">TRIP A</text>
-              <text x="12" y="46" fill="#F8FAFC" font-size="16" font-family="monospace" font-weight="black"><tspan class="live-trip-km">0.0</tspan> <tspan font-size="8" fill="#64748B">km</tspan></text>
-              
-              <text x="12" y="74" fill="#64748B" font-size="7.5" font-family="monospace">KEC. MAKS TRIP</text>
-              <text x="12" y="96" fill="url(#elioAccentGrad)" font-size="16" font-family="monospace" font-weight="black"><tspan class="live-max">0</tspan> <tspan font-size="8" fill="#64748B">km/h</tspan></text>
-              
-              <line x1="12" y1="112" x2="100" y2="112" stroke="rgba(255,255,255,0.08)" />
+    <!-- =====================================================================
+         STYLE 0: LEXUS F-SPORT (HD FULL-PRESS — LANDSCAPE ATAS & BAWAH)
+         ===================================================================== -->
+    <div id="cluster_lfa" class="hidden as-new-theme as-hd-theme">
+      <div class="as-hbar">
+        <div class="as-hgrid">
+          <div class="as-hitem"><small>TRIP A</small><b><span class="live-trip-km">0.0</span> km</b></div>
+          <div class="as-hitem"><small>KEC. MAKS</small><b class="as-c"><span class="live-max">0</span></b></div>
+          <div class="as-hitem"><small>RATA-RATA</small><b><span class="live-avg">0</span></b></div>
+          <div class="as-hitem"><small>SATELIT</small><b class="live-sat-badge as-warn">⚠ NO SAT</b></div>
+        </div>
+      </div>
 
-              <text x="12" y="132" fill="#64748B" font-size="7.5" font-family="monospace">KEC. RATA-RATA</text>
-              <text x="12" y="154" fill="url(#elioAccentGrad)" font-size="15" font-family="monospace" font-weight="black"><tspan class="live-avg">0</tspan> <tspan font-size="8" fill="#64748B">km/h</tspan></text>
+      <div class="as-stage as-hd-stage">
+        <svg class="as-stage-svg" viewBox="0 0 280 250" preserveAspectRatio="xMidYMid meet">
+          <defs>
+            <linearGradient id="lxHalo" x1="0" y1="1" x2="1" y2="0">
+              <stop offset="0%" style="stop-color: var(--theme-accent)"/>
+              <stop offset="55%" stop-color="#3b82f6"/>
+              <stop offset="100%" style="stop-color: var(--theme-accent-2)"/>
+            </linearGradient>
+            <radialGradient id="lxRim" cx="50%" cy="50%" r="50%">
+              <stop offset="72%" stop-color="#0a1020"/>
+              <stop offset="86%" stop-color="#475569"/>
+              <stop offset="93%" stop-color="#e2e8f0"/>
+              <stop offset="100%" stop-color="#1e293b"/>
+            </radialGradient>
+            <radialGradient id="lxLens" cx="50%" cy="45%" r="55%">
+              <stop offset="0%" stop-color="#111d38"/>
+              <stop offset="75%" stop-color="#050814"/>
+              <stop offset="100%" stop-color="#02040a"/>
+            </radialGradient>
+          </defs>
+          <circle cx="140" cy="126" r="120" fill="url(#lxRim)"/>
+          <circle cx="140" cy="126" r="108" fill="url(#lxLens)"/>
+          <circle cx="140" cy="126" r="98" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="11" stroke-dasharray="462 200" transform="rotate(135 140 126)"/>
+          <circle id="lfaHaloBlade" cx="140" cy="126" r="98" fill="none" stroke="url(#lxHalo)" stroke-width="11" stroke-linecap="round" stroke-dasharray="462 620" stroke-dashoffset="462" transform="rotate(135 140 126)"/>
+          <g id="lfaTicks" stroke="#cbd5e1" stroke-linecap="round"></g>
+          <g id="lfaNums" fill="#e2e8f0" font-size="11" font-weight="700" text-anchor="middle"></g>
+          <g id="lfaNeedle" transform="rotate(-135 140 126)">
+            <line x1="140" y1="126" x2="140" y2="30" stroke="#ef4444" stroke-width="3.5" stroke-linecap="round"/>
+            <circle cx="140" cy="126" r="8" fill="#e2e8f0" stroke="#0f172a" stroke-width="2"/>
+          </g>
+          <circle cx="140" cy="126" r="58" fill="#060b18" stroke="var(--theme-accent)" stroke-opacity="0.55" stroke-width="1.8"/>
+          <text id="lfaSpeedDisplay" x="140" y="142" text-anchor="middle" fill="#ffffff" font-size="56" font-weight="900" font-style="italic" letter-spacing="-2">0</text>
+          <text class="as-unit-label" x="140" y="162" text-anchor="middle" fill="var(--theme-accent)" font-size="11" font-weight="800" letter-spacing="2">KM/H</text>
+          <text x="140" y="214" text-anchor="middle" fill="#64748b" font-size="8.5" font-weight="800" letter-spacing="2">LEXUS F-SPORT</text>
+        </svg>
+      </div>
 
-              <text x="12" y="182" fill="#64748B" font-size="7" font-family="monospace">BEBAN KECEPATAN</text>
-              <rect x="12" y="190" width="88" height="6" rx="3" fill="rgba(255,255,255,0.08)" />
-              <rect id="lfaLoadBar" x="12" y="190" width="6" height="6" rx="3" fill="url(#elioAccentGrad)" />
+      <div class="as-hbar">
+        <div class="as-hgrid">
+          <div class="as-hitem"><small>KETINGGIAN</small><b class="as-c"><span class="live-alt-num">--</span> m</b></div>
+          <div class="as-hitem"><small>KOMPAS</small><b class="live-heading-val">--</b></div>
+          <div class="as-hitem"><small>G-FORCE</small><b id="lfaGDisplay" class="as-c">0.00G</b></div>
+          <div class="as-hitem"><small>SUHU BAT</small><b><span class="live-btemp">--</span>°C</b></div>
+        </div>
+      </div>
+    </div>
 
-              <line x1="12" y1="214" x2="100" y2="214" stroke="rgba(255,255,255,0.08)" />
+    <!-- =====================================================================
+         STYLE 1: BMW M3 KLASIK (HD — WIDE RISING BLUE/RED BLADES + OUTER BIAS)
+         ===================================================================== -->
+    <div id="cluster_m3" class="hidden as-new-theme as-hd-theme">
+      <div class="as-hbar">
+        <div class="as-hgrid">
+          <div class="as-hitem"><small>TRIP A</small><b><span class="live-trip-km">0.0</span> km</b></div>
+          <div class="as-hitem"><small>KEC. MAKS</small><b class="as-c"><span class="live-max">0</span></b></div>
+          <div class="as-hitem"><small>RATA-RATA</small><b><span class="live-avg">0</span></b></div>
+          <div class="as-hitem"><small>SATELIT</small><b class="live-sat-badge as-warn">⚠ NO SAT</b></div>
+        </div>
+      </div>
 
-              <text x="12" y="236" fill="#64748B" font-size="7" font-family="monospace">TABLET SENSOR ACC</text>
-              <text class="live-acc-status" x="12" y="256" fill="#F8FAFC" font-size="9.5" font-family="monospace" font-weight="bold">USB 5V • ACTIVE</text>
-              <text class="live-battery-status" x="12" y="274" fill="#64748B" font-size="7" font-family="monospace">BATTERY: --%</text>
-              
-              <line x1="12" y1="292" x2="100" y2="292" stroke="rgba(255,255,255,0.08)" />
-              <text class="live-gnss-status" x="12" y="312" fill="url(#elioAccentGrad)" font-size="8.5" font-family="monospace" font-weight="bold">🟡 GNSS SEARCH</text>
-            </g>
+      <div class="as-stage as-hd-stage">
+        <svg class="as-stage-svg" viewBox="0 0 280 250" preserveAspectRatio="xMidYMid meet">
+          <defs>
+            <linearGradient id="m3B" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#38bdf8" stop-opacity="0.95"/><stop offset="55%" stop-color="#0284c7" stop-opacity="0.72"/><stop offset="100%" stop-color="#0ea5e9" stop-opacity="0.18"/></linearGradient>
+            <linearGradient id="m3R" x1="1" y1="0" x2="0" y2="0"><stop offset="0%" stop-color="#ff2e55" stop-opacity="0.95"/><stop offset="55%" stop-color="#dc2626" stop-opacity="0.72"/><stop offset="100%" stop-color="#ef4444" stop-opacity="0.18"/></linearGradient>
+            <radialGradient id="m3Hex"><stop offset="0%" stop-color="#132242"/><stop offset="75%" stop-color="#060c1b"/><stop offset="100%" stop-color="#03060f"/></radialGradient>
+            <clipPath id="clipM3L"><path d="M 62 24 L 28 24 L 8 124 L 28 224 L 62 224 L 38 124 Z"/></clipPath>
+            <clipPath id="clipM3R"><path d="M 218 24 L 252 24 L 272 124 L 252 224 L 218 224 L 242 124 Z"/></clipPath>
+          </defs>
+          <rect x="108" y="6" width="20" height="4" rx="1" fill="#00a8ff"/>
+          <rect x="130" y="6" width="20" height="4" rx="1" fill="#1d4ed8"/>
+          <rect x="152" y="6" width="20" height="4" rx="1" fill="#e11d48"/>
 
-            <!-- RIGHT FLANKING F-SPORT FULL-HEIGHT WING (y=6 to 334) -->
-            <g transform="translate(322, 6)">
-              <rect class="elio-wing" x="0" y="0" width="112" height="328" rx="10" fill="rgba(8,12,22,0.65)" stroke="rgba(255,255,255,0.08)" stroke-width="1" />
-              <path class="elio-wing-top" d="M 16,0 L 96,0" stroke="url(#elioAccentGrad)" stroke-width="2.5" opacity="0.9" />
-              
-              <text x="12" y="24" fill="#64748B" font-size="7.5" font-family="monospace" font-weight="bold">KETINGGIAN (MDPL)</text>
-              <text x="12" y="46" fill="url(#elioAccentGrad)" font-size="16" font-family="monospace" font-weight="black"><tspan class="live-alt-num">0</tspan> <tspan font-size="8" fill="#64748B">mdpl</tspan></text>
-              
-              <text x="12" y="74" fill="#64748B" font-size="7.5" font-family="monospace">COMPASS HEADING</text>
-              <text class="live-heading-val" x="12" y="96" fill="url(#elioAccentGrad)" font-size="16" font-family="monospace" font-weight="black">N 0°</text>
-              
-              <line x1="12" y1="112" x2="100" y2="112" stroke="rgba(255,255,255,0.08)" />
+          <!-- Left Wide Luminous Blue Blade + Thin Outer Bias Rim -->
+          <path d="M 62 24 L 28 24 L 8 124 L 28 224 L 62 224 L 38 124 Z" fill="rgba(14, 58, 110, 0.24)" stroke="rgba(56,189,248,0.28)" stroke-width="1"/>
+          <g clip-path="url(#clipM3L)">
+            <rect id="m3LFill" x="4" y="224" width="62" height="0" fill="url(#m3B)"/>
+            <rect id="m3LCap" x="4" y="224" width="62" height="3.5" fill="#e0f2fe" opacity="0"/>
+          </g>
+          <path d="M 28 224 L 8 124 L 28 24" fill="none" stroke="var(--theme-accent)" stroke-width="5.5" stroke-linejoin="round" opacity="0.26"/>
+          <path d="M 28 224 L 8 124 L 28 24" fill="none" stroke="var(--theme-accent)" stroke-width="2" stroke-linejoin="round" opacity="0.9"/>
 
-              <text x="12" y="132" fill="#64748B" font-size="7.5" font-family="monospace">SPEED LIMIT</text>
-              <g transform="translate(12, 140)">
-                <circle cx="12" cy="12" r="11" fill="white" stroke="#EE1C25" stroke-width="3" />
-                <text x="12" y="16" fill="#0F172A" font-size="9.5" font-family="sans-serif" font-weight="900" text-anchor="middle">80</text>
-                <text x="32" y="16" fill="#94A3B8" font-size="8" font-family="monospace">KM/H</text>
-              </g>
+          <!-- Right Wide Luminous Red Blade + Thin Outer Bias Rim -->
+          <path d="M 218 24 L 252 24 L 272 124 L 252 224 L 218 224 L 242 124 Z" fill="rgba(110, 14, 34, 0.24)" stroke="rgba(255,46,85,0.28)" stroke-width="1"/>
+          <g clip-path="url(#clipM3R)">
+            <rect id="m3RFill" x="214" y="224" width="62" height="0" fill="url(#m3R)"/>
+            <rect id="m3RCap" x="214" y="224" width="62" height="3.5" fill="#ffe4e6" opacity="0"/>
+          </g>
+          <path d="M 252 224 L 272 124 L 252 24" fill="none" stroke="var(--theme-accent)" stroke-width="5.5" stroke-linejoin="round" opacity="0.26"/>
+          <path d="M 252 224 L 272 124 L 252 24" fill="none" stroke="var(--theme-accent)" stroke-width="2" stroke-linejoin="round" opacity="0.9"/>
 
-              <line x1="12" y1="192" x2="100" y2="192" stroke="rgba(255,255,255,0.08)" />
+          <polygon points="82,22 198,22 232,124 198,226 82,226 48,124" fill="url(#m3Hex)" stroke="rgba(148,163,184,0.28)" stroke-width="1.5"/>
+          <text id="speedDisplay" x="140" y="122" text-anchor="middle" fill="#ffffff" font-size="78" font-weight="900" font-style="italic" letter-spacing="-3">0</text>
+          <text class="as-unit-label" x="140" y="144" text-anchor="middle" fill="#38bdf8" font-size="11" font-weight="800" letter-spacing="3">KM/H</text>
 
-              <text x="12" y="214" fill="#64748B" font-size="7" font-family="monospace">LATERAL G-FORCE</text>
-              <text id="lfaGDisplay" x="12" y="236" fill="url(#elioAccentGrad)" font-size="15" font-family="monospace" font-weight="black">+0.00G</text>
+          <circle cx="140" cy="186" r="28" fill="rgba(9,15,32,0.9)" stroke="rgba(56,189,248,0.45)" stroke-width="1.3"/>
+          <circle cx="140" cy="186" r="14" fill="none" stroke="rgba(255,255,255,0.14)"/>
+          <line x1="112" y1="186" x2="168" y2="186" stroke="rgba(255,255,255,0.14)"/>
+          <line x1="140" y1="158" x2="140" y2="214" stroke="rgba(255,255,255,0.14)"/>
+          <circle id="m3GDot" cx="140" cy="186" r="4.8" fill="#ff2e55" stroke="#ffffff" stroke-width="1.4"/>
+        </svg>
+      </div>
 
-              <line x1="12" y1="256" x2="100" y2="256" stroke="rgba(255,255,255,0.08)" />
+      <div class="as-hbar">
+        <div class="as-hgrid">
+          <div class="as-hitem"><small>KETINGGIAN</small><b class="as-c"><span class="live-alt-num">--</span> m</b></div>
+          <div class="as-hitem"><small>KOMPAS</small><b class="live-heading-val">--</b></div>
+          <div class="as-hitem"><small>G-FORCE</small><b id="gScoreDisplay" class="as-c">0.00G</b></div>
+          <div class="as-hitem"><small>SUHU BAT</small><b><span class="live-btemp">--</span>°C</b></div>
+        </div>
+      </div>
+    </div>
 
-              <text x="12" y="278" fill="#64748B" font-size="7" font-family="monospace">GNSS SATELLITES</text>
-              <text class="live-sats-val" x="12" y="298" fill="url(#elioAccentGrad)" font-size="8.5" font-family="monospace" font-weight="bold">🟡 0/0 SATS</text>
-              <text x="12" y="316" fill="#64748B" font-size="7" font-family="monospace">SUHU BATERAI: <tspan class="live-btemp" fill="url(#elioAccentGrad)" font-weight="bold">--</tspan>°C</text>
-            </g>
+    <!-- =====================================================================
+         STYLE 2: MAZDA KODO (HD SOUL RED CRYSTAL — LANDSCAPE ATAS & BAWAH)
+         ===================================================================== -->
+    <div id="cluster_mazda" class="hidden as-new-theme as-hd-theme as-mazda-theme">
+      <div class="as-hbar as-hbar-red">
+        <div class="as-hgrid">
+          <div class="as-hitem"><small>TRIP A</small><b><span class="live-trip-km">0.0</span> km</b></div>
+          <div class="as-hitem"><small>KEC. MAKS</small><b class="as-r"><span class="live-max">0</span></b></div>
+          <div class="as-hitem"><small>RATA-RATA</small><b><span class="live-avg">0</span></b></div>
+          <div class="as-hitem"><small>SATELIT</small><b class="live-sat-badge as-warn">⚠ NO SAT</b></div>
+        </div>
+      </div>
 
-            <!-- CENTER: 1. MODERN TOP SPEED HUD POD (y=6 to 92) -->
-            <g transform="translate(0, 0)">
-              <polygon points="152,6 288,6 298,16 298,82 288,92 152,92 142,82 142,16" class="elio-wing" fill="rgba(6, 10, 20, 0.85)" stroke="rgba(255, 255, 255, 0.12)" stroke-width="1.2" />
-              <line class="elio-wing-top" x1="176" y1="6" x2="264" y2="6" stroke="url(#elioAccentGrad)" stroke-width="2.5" opacity="0.95" />
+      <div class="as-stage as-hd-stage">
+        <svg class="as-stage-svg" viewBox="0 0 280 250" preserveAspectRatio="xMidYMid meet">
+          <defs>
+            <radialGradient id="mzRim" cx="50%" cy="50%" r="50%">
+              <stop offset="76%" stop-color="#14090e"/>
+              <stop offset="88%" stop-color="#64748b"/>
+              <stop offset="94%" stop-color="#f8fafc"/>
+              <stop offset="100%" stop-color="#334155"/>
+            </radialGradient>
+            <radialGradient id="mzFace" cx="50%" cy="42%" r="58%">
+              <stop offset="0%" stop-color="#220a14"/>
+              <stop offset="72%" stop-color="#0b0509"/>
+              <stop offset="100%" stop-color="#040205"/>
+            </radialGradient>
+            <linearGradient id="mzGlass" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#ffffff" stop-opacity="0.16"/>
+              <stop offset="45%" stop-color="#ffffff" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <circle cx="140" cy="126" r="120" fill="url(#mzRim)"/>
+          <circle cx="140" cy="126" r="110" fill="url(#mzFace)"/>
+          <circle cx="140" cy="126" r="103" fill="none" stroke="rgba(225,29,72,0.28)" stroke-width="5"/>
+          <circle id="mazdaHaloArc" cx="140" cy="126" r="103" fill="none" stroke="#f43f5e" stroke-width="5" stroke-linecap="round" stroke-dasharray="485 650" stroke-dashoffset="485" transform="rotate(135 140 126)"/>
+          <g id="mazdaTicks" stroke="#f1f5f9" stroke-linecap="round"></g>
+          <g id="mazdaNums" fill="#f8fafc" font-size="11" font-weight="600" text-anchor="middle"></g>
+          <path d="M 48 64 A 110 110 0 0 1 210 46 L 140 126 Z" fill="url(#mzGlass)"/>
+          <g id="mazdaNeedle" transform="rotate(-135 140 126)">
+            <polygon points="140,26 144,126 136,126" fill="#f43f5e"/>
+            <polygon points="140,26 141.5,126 140,126" fill="#ffe4e6" opacity="0.7"/>
+            <circle cx="140" cy="126" r="11" fill="#1e293b" stroke="#e2e8f0" stroke-width="2"/>
+            <circle cx="140" cy="126" r="4.5" fill="#f43f5e"/>
+          </g>
+          <rect x="96" y="160" width="88" height="44" rx="10" fill="rgba(8,4,8,0.88)" stroke="rgba(244,63,94,0.45)" stroke-width="1.2"/>
+          <text id="mazdaSpeedDisplay" x="140" y="187" text-anchor="middle" fill="#ffffff" font-size="28" font-weight="800">0</text>
+          <text class="as-unit-label" x="140" y="199" text-anchor="middle" fill="#fda4af" font-size="8" font-weight="700" letter-spacing="2">KM/H</text>
+        </svg>
+      </div>
 
-              <path class="elio-frame-line" d="M 146,28 L 146,14 L 160,14" fill="none" stroke="url(#elioAccentGrad)" stroke-width="2" stroke-linecap="round" />
-              <path class="elio-frame-line" d="M 294,28 L 294,14 L 280,14" fill="none" stroke="url(#elioAccentGrad)" stroke-width="2" stroke-linecap="round" />
-              <path class="elio-frame-line" d="M 146,74 L 146,88 L 160,88" fill="none" stroke="url(#elioAccentGrad)" stroke-width="2" stroke-linecap="round" />
-              <path class="elio-frame-line" d="M 294,74 L 294,88 L 280,88" fill="none" stroke="url(#elioAccentGrad)" stroke-width="2" stroke-linecap="round" />
+      <div class="as-hbar as-hbar-red">
+        <div class="as-hgrid">
+          <div class="as-hitem"><small>KETINGGIAN</small><b class="as-r"><span class="live-alt-num">--</span> m</b></div>
+          <div class="as-hitem"><small>KOMPAS</small><b class="live-heading-val">--</b></div>
+          <div class="as-hitem"><small>G-FORCE</small><b id="mazdaGDisplay" class="as-r">0.00G</b></div>
+          <div class="as-hitem"><small>SUHU BAT</small><b><span class="live-btemp">--</span>°C</b></div>
+        </div>
+      </div>
+    </div>
 
-              <text x="220" y="22" fill="url(#elioAccentGrad)" font-size="7" font-family="monospace" font-weight="900" letter-spacing="1.5" text-anchor="middle">SATELIT</text>
+    <!-- =====================================================================
+         STYLE 3: HONDA TYPE R (+R HD CYBER F1 — LANDSCAPE ATAS & BAWAH)
+         ===================================================================== -->
+    <div id="cluster_honda" class="hidden as-new-theme as-hd-theme as-honda-theme">
+      <div class="as-f1-wrap">
+        <div class="as-f1-bar">
+          <div id="hondaLed1" class="as-led"></div><div id="hondaLed2" class="as-led"></div>
+          <div id="hondaLed3" class="as-led"></div><div id="hondaLed4" class="as-led"></div>
+          <div id="hondaLed5" class="as-led"></div><div id="hondaLed6" class="as-led"></div>
+          <div id="hondaLed7" class="as-led"></div><div id="hondaLed8" class="as-led"></div>
+          <div id="hondaLed9" class="as-led"></div><div id="hondaLed10" class="as-led"></div>
+        </div>
+        <div class="as-hbar as-hbar-red">
+          <div class="as-hgrid">
+            <div class="as-hitem"><small>TRIP A</small><b><span class="live-trip-km">0.0</span> km</b></div>
+            <div class="as-hitem"><small>KEC. MAKS</small><b class="as-r"><span class="live-max">0</span></b></div>
+            <div class="as-hitem"><small>RATA-RATA</small><b><span class="live-avg">0</span></b></div>
+            <div class="as-hitem"><small>SATELIT</small><b class="live-sat-badge as-warn">⚠ NO SAT</b></div>
+          </div>
+        </div>
+      </div>
 
-              <g transform="skewX(-7) translate(16, 0)">
-                <text id="lfaSpeedDisplay" x="194" y="72" fill="url(#elioSpeedTextGrad)" font-size="54" font-family="monospace" font-weight="900" text-anchor="middle" style="filter: drop-shadow(0 0 18px var(--theme-glow));">84</text>
-                <text x="252" y="50" fill="url(#elioAccentGrad)" font-size="11" font-family="monospace" font-weight="900">KM/H</text>
-                <text x="252" y="66" fill="url(#elioAccentGrad)" font-size="6" font-family="monospace" font-weight="bold">GPS LIVE</text>
-              </g>
+      <div class="as-stage as-hd-stage">
+        <svg class="as-stage-svg" viewBox="0 0 280 218" preserveAspectRatio="xMidYMid meet">
+          <defs>
+            <linearGradient id="hdBarG" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#22c55e"/><stop offset="55%" stop-color="#f59e0b"/><stop offset="100%" stop-color="#ef4444"/></linearGradient>
+          </defs>
+          <polygon points="24,6 256,6 272,24 272,194 256,212 24,212 8,194 8,24" fill="rgba(18,8,12,0.92)" stroke="#ef4444" stroke-width="2.2"/>
+          <polygon points="30,12 250,12 264,28 264,190 250,206 30,206 16,190 16,28" fill="none" stroke="rgba(255,255,255,0.14)" stroke-width="1"/>
+          <path d="M 24 6 L 256 6 M 24 212 L 256 212" stroke="#f87171" stroke-width="4"/>
+          <rect x="92" y="20" width="96" height="18" rx="4" fill="rgba(239,68,68,0.22)" stroke="rgba(248,113,113,0.65)"/>
+          <text x="140" y="32.5" text-anchor="middle" fill="#ffffff" font-size="9.5" font-weight="900" letter-spacing="2">+R MODE</text>
+          <text id="hondaSpeedDisplay" x="140" y="124" text-anchor="middle" fill="#ffffff" font-size="88" font-weight="900" font-style="italic" letter-spacing="-4">0</text>
+          <text class="as-unit-label" x="140" y="148" text-anchor="middle" fill="#f87171" font-size="13" font-weight="900" letter-spacing="3">KM/H</text>
+          <rect x="30" y="166" width="220" height="14" rx="4" fill="#17121b" stroke="rgba(255,255,255,0.18)"/>
+          <rect id="hondaSpeedBlade" x="32" y="168" width="8" height="10" rx="3" fill="url(#hdBarG)"/>
+          <text x="140" y="196" text-anchor="middle" fill="#94a3b8" font-size="8" font-weight="700" letter-spacing="2">HONDA TYPE R // CYBER</text>
+        </svg>
+      </div>
 
-              <line x1="168" y1="82" x2="272" y2="82" stroke="rgba(255,255,255,0.12)" stroke-width="1" />
-              <circle cx="220" cy="82" r="2" fill="url(#elioAccentGrad)" />
-            </g>
+      <div class="as-hbar as-hbar-red">
+        <div class="as-hgrid">
+          <div class="as-hitem"><small>KETINGGIAN</small><b class="as-r"><span class="live-alt-num">--</span> m</b></div>
+          <div class="as-hitem"><small>KOMPAS</small><b class="live-heading-val">--</b></div>
+          <div class="as-hitem"><small>G-FORCE</small><b id="hondaGText" class="as-r">0.00G</b></div>
+          <div class="as-hitem"><small>SUHU BAT</small><b><span class="live-btemp">--</span>°C</b></div>
+        </div>
+      </div>
+    </div>
 
-            <!-- Connecting Vertical Laser Sight Line -->
-            <line x1="220" y1="94" x2="220" y2="124" stroke="url(#elioAccentGrad)" stroke-width="1.5" stroke-dasharray="2 3" opacity="0.8" />
-
-            <!-- CENTER: 2. LOWER MECHANICAL-DIGITAL LEXUS LFA HALO DIAL (CENTER AT 220, 226, r=88) -->
-            <g transform="translate(220, 226)">
-              <circle cx="0" cy="0" r="92" fill="none" stroke="rgba(0,0,0,0.85)" stroke-width="6" />
-              <circle cx="0" cy="0" r="88" fill="url(#titaniumRim)" stroke="rgba(255,255,255,0.25)" stroke-width="2" />
-              <circle cx="0" cy="0" r="84" fill="none" stroke="rgba(0,0,0,0.6)" stroke-width="1.2" />
-              <circle cx="0" cy="0" r="82" fill="url(#smokedLens)" stroke="rgba(255,255,255,0.06)" stroke-width="1" />
-
-              <!-- Outer Graduation Hash Marks (0 to 260 km/h) -->
-              <g stroke="rgba(255,255,255,0.35)" stroke-width="1.5">
-                <line x1="-55.2" y1="46.3" x2="-49.0" y2="41.1" stroke="white" stroke-width="2" />
-                <text x="-39.8" y="33.4" fill="#94A3B8" font-size="7.5" font-family="monospace" text-anchor="middle">0</text>
-                
-                <line x1="-72.0" y1="-0.0" x2="-64.0" y2="-0.0" stroke="white" stroke-width="1.5" />
-                <text x="-52.0" y="3.0" fill="#94A3B8" font-size="7.5" font-family="monospace" text-anchor="middle">40</text>
-                
-                <line x1="-55.2" y1="-46.3" x2="-49.0" y2="-41.1" stroke="url(#elioAccentGrad)" stroke-width="2" />
-                <text x="-39.8" y="-30.4" fill="url(#elioAccentGrad)" font-size="8" font-family="monospace" font-weight="bold" text-anchor="middle">80</text>
-                
-                <line x1="-12.5" y1="-70.9" x2="-11.1" y2="-63.0" stroke="white" stroke-width="1.5" />
-                <text x="-9.0" y="-49.2" fill="#94A3B8" font-size="7.5" font-family="monospace" text-anchor="middle">120</text>
-                
-                <line x1="36.0" y1="-62.4" x2="32.0" y2="-55.4" stroke="white" stroke-width="1.5" />
-                <text x="26.0" y="-43.0" fill="#94A3B8" font-size="7.5" font-family="monospace" text-anchor="middle">160</text>
-                
-                <line x1="67.7" y1="-24.6" x2="60.1" y2="-21.9" stroke="white" stroke-width="1.5" />
-                <text x="48.9" y="-15.8" fill="#94A3B8" font-size="7.5" font-family="monospace" text-anchor="middle">200</text>
-                
-                <line x1="67.7" y1="24.6" x2="60.1" y2="21.9" stroke="#EE1C25" stroke-width="2" />
-                <text x="48.9" y="19.8" fill="#EE1C25" font-size="8" font-family="monospace" font-weight="bold" text-anchor="middle">240</text>
-                
-                <line x1="55.2" y1="46.3" x2="49.0" y2="41.1" stroke="#EE1C25" stroke-width="2" />
-                <text x="39.8" y="33.4" fill="#EE1C25" font-size="8" font-family="monospace" font-weight="bold" text-anchor="middle">260</text>
-              </g>
-
-              <!-- Base Inactive Halo Track (260° arc on r=74) -->
-              <circle cx="0" cy="0" r="74" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="7" stroke-dasharray="336 129" stroke-dashoffset="0" transform="rotate(140 0 0)" stroke-linecap="round" />
-
-              <!-- DYNAMIC ILLUMINATED LEXUS HALO BLADE -->
-              <circle id="lfaHaloBlade" cx="0" cy="0" r="74" fill="none" stroke="url(#elioAccentGrad)" stroke-width="7" stroke-dasharray="336 129" stroke-dashoffset="227" transform="rotate(140 0 0)" stroke-linecap="round" style="filter: drop-shadow(0 0 14px var(--theme-glow));" class="transition-all duration-300" />
-
-              <!-- THE FAMOUS LEXUS LFA ROTATING ILLUMINATED NEEDLE -->
-              <g id="lfaNeedle" transform="rotate(-46 0 0)" class="transition-transform duration-150">
-                <line x1="0" y1="0" x2="0" y2="-66" stroke="white" stroke-width="2.5" stroke-linecap="round" style="filter: drop-shadow(0 0 6px white);" />
-                <polygon points="0,-70 4,-62 -4,-62" fill="#EE1C25" style="filter: drop-shadow(0 0 6px #EE1C25);" />
-                <circle cx="0" cy="0" r="10" fill="#090D16" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" />
-                <circle cx="0" cy="0" r="4.5" fill="url(#elioAccentGrad)" />
-              </g>
-
-              <!-- DIAL INNER COCKPIT TELEMETRY -->
-              <g transform="translate(0, -28)">
-                <rect x="-30" y="-8" width="60" height="16" rx="8" fill="rgba(238,28,37,0.25)" stroke="#EE1C25" stroke-width="1" />
-                <circle cx="-19" cy="0" r="2.5" fill="#EE1C25" />
-                <text x="3" y="3.5" fill="#FEE2E2" font-size="7.5" font-family="monospace" font-weight="900" letter-spacing="1" text-anchor="middle">SPORT S+</text>
-              </g>
-
-              <line x1="-32" y1="0" x2="-16" y2="0" stroke="rgba(255,255,255,0.2)" stroke-width="1" />
-              <line x1="16" y1="0" x2="32" y2="0" stroke="rgba(255,255,255,0.2)" stroke-width="1" />
-              <line x1="0" y1="-8" x2="0" y2="-3" stroke="rgba(255,255,255,0.2)" stroke-width="1" />
-              <line x1="0" y1="3" x2="0" y2="8" stroke="rgba(255,255,255,0.2)" stroke-width="1" />
-
-              <text id="lfaGForceDial" x="0" y="10" fill="#F8FAFC" font-size="15" font-family="monospace" font-weight="900" text-anchor="middle">+0.40G</text>
-              <text x="0" y="24" fill="url(#elioAccentGrad)" font-size="7.5" font-family="monospace" font-weight="bold" letter-spacing="1" text-anchor="middle">LATERAL TELEMETRY</text>
-
-              <text x="0" y="44" fill="#94A3B8" font-size="8.5" font-family="monospace" font-weight="black" letter-spacing="1.5" text-anchor="middle">LEXUS F SPORT</text>
-            </g>
+    <!-- =====================================================================
+         STYLE 4: ELIO NEON (TOYOTA INNOVA REBORN — FULL-PRESS EDGE-TO-EDGE)
+         ===================================================================== -->
+    <div id="cluster_elio" class="hidden as-new-theme as-elio-theme">
+      <div class="as-top-chips">
+        <div class="as-chip">
+          <svg class="as-chip-ico" viewBox="0 0 24 24" fill="none">
+            <path d="M10 2h4M12 14l3-3M12 6a8 8 0 1 0 0 16 8 8 0 0 0 0-16z" stroke="#e2e8f0" stroke-width="1.8" stroke-linecap="round"/>
+            <path d="M18.5 7.5l1.5-1.5" stroke="#e2e8f0" stroke-width="1.8" stroke-linecap="round"/>
           </svg>
+          <div><small>WAKTU JALAN</small><b class="live-time">0:00:00</b></div>
         </div>
-
-        <!-- STYLE 2: BMW M3 G80 LIVE COCKPIT (FULL-BLEED 440x340) -->
-        <div id="cluster_m3" class="hidden relative flex flex-col items-center justify-center my-0 py-0 w-full flex-1 min-h-[300px] sm:min-h-[330px]">
-          <svg class="w-full h-full flex-1" viewBox="0 0 440 340" preserveAspectRatio="xMidYMid meet">
-            <!-- Background laser grid -->
-            <line x1="10" y1="170" x2="430" y2="170" stroke="rgba(255,255,255,0.06)" stroke-dasharray="3 4" stroke-width="1" />
-            <line x1="220" y1="14" x2="220" y2="326" stroke="rgba(255,255,255,0.06)" stroke-dasharray="3 4" stroke-width="1" />
-
-            <!-- LEFT CHEVRON: SPEEDOMETER (0 - 240 KM/H) FULL-BLEED (x=10, y=14 to 326) -->
-            <line x1="130" y1="326" x2="130" y2="316" stroke="rgba(255,255,255,0.5)" stroke-width="2" />
-            <text x="130" y="310" fill="#94A3B8" font-size="8" font-family="monospace" text-anchor="middle">0</text>
-            
-            <line x1="70" y1="326" x2="70" y2="316" stroke="rgba(255,255,255,0.35)" stroke-width="1.5" />
-            <text x="70" y="310" fill="#94A3B8" font-size="8" font-family="monospace" text-anchor="middle">30</text>
-            
-            <line x1="28" y1="280" x2="36" y2="275" stroke="rgba(255,255,255,0.35)" stroke-width="1.5" />
-            <text x="44" y="277" fill="#94A3B8" font-size="8" font-family="monospace">60</text>
-            
-            <line x1="10" y1="220" x2="2" y2="220" stroke="url(#elioAccentGrad)" stroke-width="2.5" />
-            <text x="18" y="223" fill="#F8FAFC" font-size="9" font-family="monospace" font-weight="bold">90</text>
-            
-            <line x1="10" y1="170" x2="0" y2="170" stroke="url(#elioAccentGrad)" stroke-width="3" />
-            <text x="18" y="173" fill="url(#elioAccentGrad)" font-size="10" font-family="monospace" font-weight="black">120</text>
-            
-            <line x1="10" y1="120" x2="2" y2="120" stroke="url(#elioAccentGrad)" stroke-width="2.5" />
-            <text x="18" y="123" fill="#F8FAFC" font-size="9" font-family="monospace" font-weight="bold">150</text>
-            
-            <line x1="28" y1="60" x2="36" y2="65" stroke="rgba(255,255,255,0.35)" stroke-width="1.5" />
-            <text x="44" y="65" fill="#94A3B8" font-size="8" font-family="monospace">180</text>
-            
-            <line x1="70" y1="14" x2="70" y2="24" stroke="rgba(255,255,255,0.5)" stroke-width="2" />
-            <text x="70" y="34" fill="#E2E8F0" font-size="8" font-family="monospace" text-anchor="middle">210</text>
-            
-            <line x1="130" y1="14" x2="130" y2="24" stroke="#EE1C25" stroke-width="2.5" />
-            <text x="130" y="34" fill="#EE1C25" font-size="9" font-family="monospace" font-weight="bold" text-anchor="middle">240</text>
-
-            <path d="M 130,326 L 44,326 L 10,256 L 10,84 L 44,14 L 130,14" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="12" stroke-linejoin="miter" stroke-miterlimit="6" />
-            <path id="m3SpeedPath" d="M 130,326 L 44,326 L 10,256 L 10,84 L 44,14 L 130,14" fill="none" stroke="url(#elioAccentGrad)" stroke-width="12" stroke-linejoin="miter" stroke-miterlimit="6" stroke-dasharray="500" stroke-dashoffset="310" style="filter: drop-shadow(0 0 16px var(--theme-glow));" class="transition-all duration-300" />
-
-            <!-- RIGHT CHEVRON: G-FORCE / DYNAMICS FULL-BLEED (x=430, y=14 to 326) -->
-            <line x1="310" y1="326" x2="310" y2="316" stroke="rgba(255,255,255,0.5)" stroke-width="2" />
-            <text x="310" y="310" fill="#94A3B8" font-size="8" font-family="monospace" text-anchor="middle">0.0</text>
-            
-            <line x1="370" y1="326" x2="370" y2="316" stroke="rgba(255,255,255,0.35)" stroke-width="1.5" />
-            <text x="370" y="310" fill="#94A3B8" font-size="8" font-family="monospace" text-anchor="middle">0.3</text>
-            
-            <line x1="412" y1="280" x2="404" y2="275" stroke="rgba(255,255,255,0.35)" stroke-width="1.5" />
-            <text x="396" y="277" fill="#94A3B8" font-size="8" font-family="monospace" text-anchor="end">0.5</text>
-            
-            <line x1="430" y1="220" x2="438" y2="220" stroke="url(#elioAccentGrad)" stroke-width="2.5" />
-            <text x="422" y="223" fill="#F8FAFC" font-size="9" font-family="monospace" font-weight="bold" text-anchor="end">0.8G</text>
-            
-            <line x1="430" y1="170" x2="440" y2="170" stroke="url(#elioAccentGrad)" stroke-width="3" />
-            <text x="422" y="173" fill="url(#elioAccentGrad)" font-size="10" font-family="monospace" font-weight="black" text-anchor="end">1.0G</text>
-            
-            <line x1="430" y1="120" x2="438" y2="120" stroke="#EE1C25" stroke-width="2.5" />
-            <text x="422" y="123" fill="#EE1C25" font-size="9" font-family="monospace" font-weight="bold" text-anchor="end">1.2G</text>
-            
-            <line x1="412" y1="60" x2="404" y2="65" stroke="#EE1C25" stroke-width="2" />
-            <text x="396" y="65" fill="#EE1C25" font-size="8" font-family="monospace" text-anchor="end">1.4G</text>
-            
-            <line x1="370" y1="14" x2="370" y2="24" stroke="#EE1C25" stroke-width="2.5" />
-            <text x="370" y="34" fill="#EE1C25" font-size="8" font-family="monospace" font-weight="bold" text-anchor="middle">1.6G</text>
-
-            <path d="M 310,326 L 396,326 L 430,256 L 430,84 L 396,14 L 310,14" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="12" stroke-linejoin="miter" stroke-miterlimit="6" />
-            <path id="m3RpmPath" d="M 310,326 L 396,326 L 430,256 L 430,84 L 396,14 L 310,14" fill="none" stroke="url(#elioAccentGrad)" stroke-width="12" stroke-linejoin="miter" stroke-miterlimit="6" stroke-dasharray="500" stroke-dashoffset="360" style="filter: drop-shadow(0 0 16px var(--theme-glow));" class="transition-all duration-300" />
-
-            <!-- CENTER RETICLE & CALIPERS -->
-            <path d="M 196,44 L 220,30 L 244,44" fill="none" stroke="url(#elioAccentGrad)" stroke-width="2.5" opacity="0.9" />
-            <path d="M 196,296 L 220,310 L 244,296" fill="none" stroke="url(#elioAccentGrad)" stroke-width="2.5" opacity="0.9" />
-            <line x1="170" y1="170" x2="185" y2="170" stroke="rgba(255,255,255,0.3)" stroke-width="2" />
-            <line x1="255" y1="170" x2="270" y2="170" stroke="rgba(255,255,255,0.3)" stroke-width="2" />
+        <div class="as-chip">
+          <svg class="as-chip-ico" viewBox="0 0 24 24" fill="none">
+            <path d="M7 20L10.2 4M17 20L13.8 4" stroke="#e2e8f0" stroke-width="1.8" stroke-linecap="round"/>
+            <path d="M12 5v2.5M12 10.5v3M12 16.5V20" stroke="#e2e8f0" stroke-width="1.6" stroke-linecap="round"/>
           </svg>
-
-          <!-- Center Speed Readout -->
-          <div class="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
-            <div class="flex items-baseline justify-center skew-speed">
-              <span id="speedDisplay" class="font-mono font-black text-6xl sm:text-7xl tracking-tighter text-white transition-all duration-150" style="text-shadow: 0 0 28px var(--theme-glow);">84</span>
-              <span class="text-sm font-mono font-black tracking-widest text-[var(--theme-accent)] ml-1">KM/H</span>
-            </div>
-            
-            <div class="text-[9px] font-mono tracking-widest text-slate-400 mt-1">
-              G-FORCE: <span class="text-white font-bold" id="gScoreDisplay">+0.40G</span>
-            </div>
-
-            <div class="mt-2 flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-black/60 border border-white/10 text-[9px] font-mono">
-              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-              <span class="text-slate-300 font-bold">BMW M3 G80 LIVE COCKPIT</span>
-            </div>
-
-            <!-- AutoSplit: panel sensor BMW (kartu kaca kecil) -->
-            <div class="as-m3-grid">
-              <div class="as-m3-cell"><span>TRIP</span><b><i class="live-trip-km">0.0</i><small>km</small></b></div>
-              <div class="as-m3-cell"><span>KETINGGIAN</span><b><i class="live-alt-num">0</i><small>mdpl</small></b></div>
-              <div class="as-m3-cell"><span>ARAH</span><b><i class="live-heading-val">N 0°</i></b></div>
-              <div class="as-m3-cell"><span>KEC. MAKS</span><b><i class="live-max">0</i><small>km/h</small></b></div>
-              <div class="as-m3-cell"><span>RATA-RATA</span><b><i class="live-avg">0</i><small>km/h</small></b></div>
-              <div class="as-m3-cell"><span>SATELIT</span><b><i class="live-sats-num">0/0</i><small>SATS</small></b></div>
-              <div class="as-m3-cell as-m3-extra"><span>WAKTU JALAN</span><b><i class="live-time">0:00:00</i></b></div>
-              <div class="as-m3-cell as-m3-extra"><span>SUHU BATERAI</span><b><i class="live-btemp">--</i><small>°C</small></b></div>
-              <div class="as-m3-cell as-m3-extra"><span>BATERAI</span><b><i class="live-battery-status">--%</i></b></div>
-            </div>
-          </div>
+          <div><small>JARAK</small><b><span class="live-trip-km">0.0</span> km</b></div>
         </div>
+      </div>
 
-        <!-- STYLE 3: MAZDA KODO & JINBA ITTAI LUXURY METER (FULL-BLEED 440x340) -->
-        <div id="cluster_mazda" class="hidden relative flex flex-col items-center justify-center my-0 py-0 w-full flex-1 min-h-[300px] sm:min-h-[330px]">
-          <svg class="w-full h-full flex-1" viewBox="0 0 440 340" preserveAspectRatio="xMidYMid meet">
-            <defs>
-              <linearGradient id="mazdaSatinBezel" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stop-color="#475569" />
-                <stop offset="25%" stop-color="#94A3B8" />
-                <stop offset="50%" stop-color="#E2E8F0" />
-                <stop offset="75%" stop-color="#64748B" />
-                <stop offset="100%" stop-color="#1E293B" />
-              </linearGradient>
-              <radialGradient id="mazdaDialBg" cx="50%" cy="50%" r="50%">
-                <stop offset="65%" stop-color="#070A12" />
-                <stop offset="90%" stop-color="#04060A" />
-                <stop offset="100%" stop-color="#020306" />
-              </radialGradient>
-            </defs>
+      <!-- Tight Full-Press ViewBox (0 0 380 320): Arc radius 176 presses right to left/right frame -->
+      <div class="as-stage">
+        <svg class="as-stage-svg" viewBox="0 0 380 320" preserveAspectRatio="xMidYMid meet">
+          <defs>
+            <linearGradient id="elioNeonArc" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" style="stop-color: var(--theme-accent)"/>
+              <stop offset="48%" stop-color="#3b82f6"/>
+              <stop offset="100%" style="stop-color: var(--theme-accent-2)"/>
+            </linearGradient>
+            <linearGradient id="elioHorizonFade" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#050714" stop-opacity="0"/>
+              <stop offset="45%" stop-color="#050714" stop-opacity="0.9"/>
+              <stop offset="100%" stop-color="#050714" stop-opacity="1"/>
+            </linearGradient>
+            <radialGradient id="elioAmbient" cx="50%" cy="46%" r="50%">
+              <stop offset="52%" stop-color="#0b102c" stop-opacity="0"/>
+              <stop offset="84%" style="stop-color: var(--theme-accent)" stop-opacity="0.26"/>
+              <stop offset="100%" stop-color="#04050e" stop-opacity="0"/>
+            </radialGradient>
+          </defs>
+          <circle cx="190" cy="168" r="184" fill="url(#elioAmbient)"/>
+          <path d="M 28 240 A 176 176 0 1 1 352 240" fill="none" stroke="url(#elioNeonArc)" stroke-width="14" stroke-linecap="round" opacity="0.24"/>
+          <path d="M 28 240 A 176 176 0 1 1 352 240" fill="none" stroke="url(#elioNeonArc)" stroke-width="6.5" stroke-linecap="round"/>
+          <path id="elioArcProgress" d="M 28 240 A 176 176 0 1 1 352 240" fill="none" stroke="#ffffff" stroke-opacity="0.82" stroke-width="2.6" stroke-linecap="round" stroke-dasharray="700" stroke-dashoffset="700"/>
+          <g id="elioTicks" stroke="#e2e8f0" stroke-linecap="round"></g>
+          <g id="elioNumbers" fill="#f8fafc" font-size="14.5" font-weight="700" font-style="italic" text-anchor="middle"></g>
+          <circle cx="190" cy="166" r="96" fill="rgba(7, 10, 28, 0.72)" stroke="rgba(148, 163, 184, 0.28)" stroke-width="1.5"/>
+          <text id="elioSpeedDisplay" x="190" y="186" text-anchor="middle" fill="#ffffff" font-size="86" font-weight="800" font-style="italic" letter-spacing="-3">0</text>
+          <text class="as-unit-label" x="190" y="214" text-anchor="middle" fill="#cbd5e1" font-size="16" font-style="italic">km/h</text>
+          <rect x="0" y="224" width="380" height="96" fill="url(#elioHorizonFade)"/>
+          <path d="M 8 314 L 146 244" stroke="var(--theme-accent)" stroke-width="3.6" opacity="0.88"/>
+          <path d="M 372 314 L 234 244" stroke="var(--theme-accent-2)" stroke-width="3.6" opacity="0.88"/>
+          <path d="M 102 304 L 118 288" stroke="#ffffff" stroke-width="3.4" stroke-linecap="round" opacity="0.9"/>
+          <path d="M 278 304 L 262 288" stroke="#ffffff" stroke-width="3.4" stroke-linecap="round" opacity="0.9"/>
+        </svg>
+        <div class="as-car-wrap">
+          <div class="as-car-glow"></div>
+          <img class="as-car-img" src="innova-reborn.png" alt="Toyota Innova Reborn"/>
+        </div>
+      </div>
 
-            <!-- LEFT WING: MAZDA i-ACTIVSENSE & TRIP (y=6 to 334) -->
-            <g transform="translate(6, 6)">
-              <rect class="elio-wing" x="0" y="0" width="112" height="328" rx="10" fill="rgba(8,12,22,0.65)" stroke="rgba(255,255,255,0.08)" stroke-width="1" />
-              <circle cx="16" cy="22" r="4" fill="url(#elioAccentGrad)" />
-              <text x="26" y="25" fill="url(#elioAccentGrad)" font-size="8.5" font-family="monospace" font-weight="bold">i-STOP READY</text>
-              
-              <text x="14" y="48" fill="#64748B" font-size="7.5" font-family="monospace">KEC. RATA-RATA</text>
-              <text x="14" y="68" fill="#F8FAFC" font-size="16" font-family="monospace" font-weight="black"><tspan class="live-avg">0</tspan> <tspan font-size="8" fill="#64748B">km/h</tspan></text>
-              
-              <line x1="14" y1="84" x2="98" y2="84" stroke="rgba(255,255,255,0.08)" />
+      <div class="as-sensor-strip">
+        <div class="as-s-pill"><small>KEC. MAX</small><b class="as-accent"><span class="live-max">0</span> <span class="as-unit-sm">km/h</span></b></div>
+        <div class="as-s-pill"><small>MDPL</small><b><span class="live-alt-num">--</span> m</b></div>
+        <div class="as-s-pill"><small>KOMPAS</small><b class="as-accent live-heading-val">--</b></div>
+        <div class="as-s-pill"><small>G-FORCE</small><b id="elioGDisplay">0.00 G</b></div>
+        <div class="as-s-pill"><small>SUHU BAT</small><b><span class="live-btemp">--</span>°C</b></div>
+      </div>
+    </div>
 
-              <text x="14" y="106" fill="#64748B" font-size="7.5" font-family="monospace">TRIP A</text>
-              <text x="14" y="126" fill="#E2E8F0" font-size="15" font-family="monospace" font-weight="bold"><tspan class="live-trip-km">0.0</tspan> <tspan font-size="8" fill="#64748B">km</tspan></text>
-              
-              <line x1="14" y1="144" x2="98" y2="144" stroke="rgba(255,255,255,0.08)" />
-
-              <text x="14" y="164" fill="#64748B" font-size="7.5" font-family="monospace">WAKTU JALAN</text>
-              <text x="14" y="186" fill="#E2E8F0" font-size="14" font-family="monospace" font-weight="bold"><tspan class="live-time">0:00:00</tspan></text>
-
-              <line x1="14" y1="200" x2="98" y2="200" stroke="rgba(255,255,255,0.08)" />
-
-              <text x="14" y="222" fill="#64748B" font-size="7.5" font-family="monospace">TABLET TELEMETRY</text>
-              <text x="14" y="242" fill="#F8FAFC" font-size="9.5" font-family="monospace" font-weight="bold">ACC • <tspan class="live-acc-status" fill="url(#elioAccentGrad)">ACTIVE</tspan></text>
-              <text class="live-gnss-status" x="14" y="260" fill="#64748B" font-size="7.5" font-family="monospace">GNSS SEARCH</text>
-
-              <line x1="14" y1="280" x2="98" y2="280" stroke="rgba(255,255,255,0.08)" />
-              <text x="14" y="304" fill="url(#elioAccentGrad)" font-size="8" font-family="monospace" font-weight="bold">MAZDA HARMONY</text>
-            </g>
-
-            <!-- RIGHT WING: RANGE & NAVIGATION (y=6 to 334) -->
-            <g transform="translate(322, 6)">
-              <rect class="elio-wing" x="0" y="0" width="112" height="328" rx="10" fill="rgba(8,12,22,0.65)" stroke="rgba(255,255,255,0.08)" stroke-width="1" />
-              <text x="14" y="24" fill="#64748B" font-size="7.5" font-family="monospace">KEC. MAKS TRIP</text>
-              <text x="14" y="44" fill="url(#elioAccentGrad)" font-size="16" font-family="monospace" font-weight="black"><tspan class="live-max">0</tspan> <tspan font-size="8" fill="#64748B">km/h</tspan></text>
-              
-              <line x1="14" y1="60" x2="98" y2="60" stroke="rgba(255,255,255,0.08)" />
-
-              <text x="14" y="80" fill="#64748B" font-size="7.5" font-family="monospace">HEADING</text>
-              <text class="live-heading-val" x="14" y="100" fill="url(#elioAccentGrad)" font-size="16" font-family="monospace" font-weight="bold">N 0°</text>
-
-              <line x1="14" y1="116" x2="98" y2="116" stroke="rgba(255,255,255,0.08)" />
-
-              <text x="14" y="136" fill="#64748B" font-size="7.5" font-family="monospace">TINGGI: <tspan class="live-alt-num" fill="url(#elioAccentGrad)" font-weight="bold">0</tspan> mdpl</text>
-              <g transform="translate(14, 144)">
-                <circle cx="12" cy="12" r="11" fill="white" stroke="#EE1C25" stroke-width="3" />
-                <text x="12" y="16" fill="#0F172A" font-size="9.5" font-family="sans-serif" font-weight="900" text-anchor="middle">80</text>
-                <text x="32" y="16" fill="#94A3B8" font-size="8" font-family="monospace">LIMIT</text>
-              </g>
-
-              <line x1="14" y1="190" x2="98" y2="190" stroke="rgba(255,255,255,0.08)" />
-
-              <text x="14" y="214" fill="#64748B" font-size="7.5" font-family="monospace">SUHU BATERAI</text>
-              <text x="14" y="234" fill="url(#elioAccentGrad)" font-size="12" font-family="monospace" font-weight="bold"><tspan class="live-btemp">--</tspan> <tspan font-size="8" fill="#64748B">°C</tspan></text>
-
-              <line x1="14" y1="256" x2="98" y2="256" stroke="rgba(255,255,255,0.08)" />
-              <text x="14" y="280" fill="#64748B" font-size="7.5" font-family="monospace">GNSS SATELLITES</text>
-              <text class="live-sats-val" x="14" y="302" fill="url(#elioAccentGrad)" font-size="9" font-family="monospace" font-weight="bold">0/0 SATS</text>
-            </g>
-
-            <!-- CENTER: 1. MAZDA ACTIVE DRIVING DISPLAY HUD POD (ABOVE ANALOG DIAL, y=6 to 92) -->
-            <g transform="translate(0, 0)">
-              <!-- Satin Chrome Beveled HUD Pod Frame -->
-              <polygon points="152,6 288,6 298,16 298,82 288,92 152,92 142,82 142,16" class="elio-wing" fill="rgba(6, 10, 20, 0.85)" stroke="rgba(255, 255, 255, 0.12)" stroke-width="1.2" />
-              <line class="elio-wing-top" x1="176" y1="6" x2="264" y2="6" stroke="url(#elioAccentGrad)" stroke-width="2.5" opacity="0.95" />
-
-              <!-- Refined Minimalist Corner Calipers -->
-              <path class="elio-frame-line" d="M 146,28 L 146,14 L 160,14" fill="none" stroke="url(#elioAccentGrad)" stroke-width="2" stroke-linecap="round" />
-              <path class="elio-frame-line" d="M 294,28 L 294,14 L 280,14" fill="none" stroke="url(#elioAccentGrad)" stroke-width="2" stroke-linecap="round" />
-              <path class="elio-frame-line" d="M 146,74 L 146,88 L 160,88" fill="none" stroke="url(#elioAccentGrad)" stroke-width="2" stroke-linecap="round" />
-              <path class="elio-frame-line" d="M 294,74 L 294,88 L 280,88" fill="none" stroke="url(#elioAccentGrad)" stroke-width="2" stroke-linecap="round" />
-
-              <text x="220" y="22" fill="url(#elioAccentGrad)" font-size="7" font-family="sans-serif" font-weight="bold" letter-spacing="1.5" text-anchor="middle">SATELIT</text>
-
-              <!-- Dynamic Speed Digits (Above the analog dial) -->
-              <g transform="skewX(-6) translate(14, 0)">
-                <text id="mazdaSpeedDisplay" x="198" y="72" fill="url(#elioSpeedTextGrad)" font-size="54" font-family="sans-serif" font-weight="300" text-anchor="middle" style="filter: drop-shadow(0 0 16px var(--theme-glow));">84</text>
-                <text x="252" y="50" fill="url(#elioAccentGrad)" font-size="11" font-family="sans-serif" font-weight="700">KM/H</text>
-                <text x="252" y="66" fill="url(#elioAccentGrad)" font-size="6" font-family="monospace" font-weight="bold">GPS LIVE</text>
-              </g>
-
-              <line x1="168" y1="82" x2="272" y2="82" stroke="rgba(255,255,255,0.12)" stroke-width="1" />
-              <circle cx="220" cy="82" r="2" fill="url(#elioAccentGrad)" />
-            </g>
-
-            <!-- Connecting Vertical Laser Sight Line -->
-            <line x1="220" y1="94" x2="220" y2="124" stroke="url(#elioAccentGrad)" stroke-width="1.5" stroke-dasharray="2 3" opacity="0.8" />
-
-            <!-- CENTER: 2. LOWER MAZDA KODO ANALOG METER (CENTER AT 220, 226, r=88) -->
-            <g transform="translate(220, 226)">
-              <circle cx="0" cy="0" r="92" fill="none" stroke="rgba(0,0,0,0.85)" stroke-width="6" />
-              <circle cx="0" cy="0" r="88" fill="url(#mazdaSatinBezel)" stroke="rgba(255,255,255,0.25)" stroke-width="1.8" />
-              <circle cx="0" cy="0" r="84" fill="none" stroke="rgba(0,0,0,0.6)" stroke-width="1.2" />
-              <circle cx="0" cy="0" r="82" fill="url(#mazdaDialBg)" stroke="rgba(255,255,255,0.06)" stroke-width="1" />
-
-              <!-- Outer Graduation Hash Marks (0 to 260 km/h) -->
-              <g stroke="rgba(255,255,255,0.3)" stroke-width="1">
-                <line x1="-55.2" y1="46.3" x2="-49.0" y2="41.1" stroke="white" stroke-width="1.8" />
-                <text x="-39.8" y="33.4" fill="#94A3B8" font-size="7.5" font-family="sans-serif" text-anchor="middle">0</text>
-                
-                <line x1="-72.0" y1="-0.0" x2="-64.0" y2="-0.0" stroke="white" stroke-width="1.5" />
-                <text x="-52.0" y="3.0" fill="#94A3B8" font-size="7.5" font-family="sans-serif" text-anchor="middle">40</text>
-                
-                <line x1="-55.2" y1="-46.3" x2="-49.0" y2="-41.1" stroke="url(#elioAccentGrad)" stroke-width="1.8" />
-                <text x="-39.8" y="-30.4" fill="url(#elioAccentGrad)" font-size="8" font-family="sans-serif" font-weight="bold" text-anchor="middle">80</text>
-                
-                <line x1="-12.5" y1="-70.9" x2="-11.1" y2="-63.0" stroke="white" stroke-width="1.5" />
-                <text x="-9.0" y="-49.2" fill="#94A3B8" font-size="7.5" font-family="sans-serif" text-anchor="middle">120</text>
-                
-                <line x1="36.0" y1="-62.4" x2="32.0" y2="-55.4" stroke="white" stroke-width="1.5" />
-                <text x="26.0" y="-43.0" fill="#94A3B8" font-size="7.5" font-family="sans-serif" text-anchor="middle">160</text>
-                
-                <line x1="67.7" y1="-24.6" x2="60.1" y2="-21.9" stroke="white" stroke-width="1.5" />
-                <text x="48.9" y="-15.8" fill="#94A3B8" font-size="7.5" font-family="sans-serif" text-anchor="middle">200</text>
-                
-                <line x1="67.7" y1="24.6" x2="60.1" y2="21.9" stroke="#E11D48" stroke-width="1.8" />
-                <text x="48.9" y="19.8" fill="#E11D48" font-size="8" font-family="sans-serif" font-weight="bold" text-anchor="middle">240</text>
-                
-                <line x1="55.2" y1="46.3" x2="49.0" y2="41.1" stroke="#E11D48" stroke-width="1.8" />
-                <text x="39.8" y="33.4" fill="#E11D48" font-size="8" font-family="sans-serif" font-weight="bold" text-anchor="middle">260</text>
-              </g>
-
-              <!-- Dynamic Illuminated Trailing Halo Arc -->
-              <circle cx="0" cy="0" r="74" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="6" stroke-dasharray="336 129" stroke-dashoffset="0" transform="rotate(140 0 0)" stroke-linecap="round" />
-              <circle id="mazdaHaloArc" cx="0" cy="0" r="74" fill="none" stroke="url(#elioAccentGrad)" stroke-width="6" stroke-dasharray="336 129" stroke-dashoffset="227" transform="rotate(140 0 0)" stroke-linecap="round" style="filter: drop-shadow(0 0 12px var(--theme-glow));" class="transition-all duration-300" />
-
-              <!-- Elegant Slim Mazda Crimson / Accent Needle -->
-              <g id="mazdaNeedle" transform="rotate(-46 0 0)" class="transition-transform duration-150">
-                <line x1="0" y1="0" x2="0" y2="-66" stroke="url(#elioAccentGrad)" stroke-width="2.5" stroke-linecap="round" style="filter: drop-shadow(0 0 8px var(--theme-glow));" />
-                <circle cx="0" cy="0" r="9" fill="#0B0F19" stroke="#94A3B8" stroke-width="1.5" />
-                <circle cx="0" cy="0" r="4" fill="url(#elioAccentGrad)" />
-              </g>
-
-              <!-- DIAL INNER COCKPIT TELEMETRY -->
-              <g transform="translate(0, -28)">
-                <rect x="-32" y="-8" width="64" height="16" rx="8" fill="rgba(var(--theme-accent-rgb, 0,229,255), 0.2)" stroke="url(#elioAccentGrad)" stroke-width="1" />
-                <circle cx="-20" cy="0" r="2.5" fill="url(#elioAccentGrad)" />
-                <text x="3" y="3.5" fill="#FFFFFF" font-size="7.5" font-family="sans-serif" font-weight="bold" letter-spacing="1" text-anchor="middle">i-ACTIVSENSE</text>
-              </g>
-
-              <line x1="-32" y1="0" x2="-16" y2="0" stroke="rgba(255,255,255,0.2)" stroke-width="1" />
-              <line x1="16" y1="0" x2="32" y2="0" stroke="rgba(255,255,255,0.2)" stroke-width="1" />
-              <line x1="0" y1="-8" x2="0" y2="-3" stroke="rgba(255,255,255,0.2)" stroke-width="1" />
-              <line x1="0" y1="3" x2="0" y2="8" stroke="rgba(255,255,255,0.2)" stroke-width="1" />
-
-              <text id="mazdaGDisplay" x="0" y="10" fill="#F8FAFC" font-size="15" font-family="sans-serif" font-weight="700" text-anchor="middle">+0.40G</text>
-              <text x="0" y="24" fill="url(#elioAccentGrad)" font-size="7.5" font-family="sans-serif" font-weight="bold" letter-spacing="1" text-anchor="middle">GVC PLUS DYNAMICS</text>
-
-              <text x="0" y="44" fill="#94A3B8" font-size="8.5" font-family="sans-serif" font-weight="bold" letter-spacing="1.5" text-anchor="middle">MAZDA KODO</text>
-            </g>
+    <!-- =====================================================================
+         STYLE 5: BMW M SPORT (INNOVA REBORN — WIDE RISING BLADES + OUTER BIAS)
+         ===================================================================== -->
+    <div id="cluster_bmw_m" class="hidden as-new-theme as-bmw-theme">
+      <div class="as-top-chips">
+        <div class="as-chip as-bmw-chip">
+          <svg class="as-chip-ico" viewBox="0 0 24 24" fill="none">
+            <path d="M10 2h4M12 14l3-3M12 6a8 8 0 1 0 0 16 8 8 0 0 0 0-16z" stroke="#e2e8f0" stroke-width="1.8" stroke-linecap="round"/>
           </svg>
+          <div><small>WAKTU JALAN</small><b class="live-time">0:00:00</b></div>
         </div>
-
-        <!-- STYLE 4: HONDA CIVIC TYPE R // MODERN FUTURISTIC CYBER COCKPIT (FULL-BLEED 440x340) -->
-        <div id="cluster_honda" class="hidden relative flex flex-col items-center justify-center my-0 py-0 w-full flex-1 min-h-[300px] sm:min-h-[330px]">
-          <svg class="w-full h-full flex-1" viewBox="0 0 440 340" preserveAspectRatio="xMidYMid meet">
-            <!-- F1-STYLE TOP SHIFT-LIGHT REV / G-FORCE LADDER BAR (y=6 to 30) -->
-            <g transform="translate(10, 6)">
-              <rect x="0" y="0" width="420" height="22" rx="4" fill="rgba(8,12,22,0.85)" class="elio-frame" stroke="url(#elioAccentGrad)" stroke-width="1.2" stroke-opacity="0.75" />
-              
-              <!-- 10 Segmented LEDs stretching across the card in theme accent -->
-              <rect id="hondaLed1" x="8" y="3" width="34" height="16" rx="2" fill="url(#elioAccentGrad)" opacity="0.45" class="transition-all" />
-              <rect id="hondaLed2" x="48" y="3" width="34" height="16" rx="2" fill="url(#elioAccentGrad)" opacity="0.55" class="transition-all" />
-              <rect id="hondaLed3" x="88" y="3" width="34" height="16" rx="2" fill="url(#elioAccentGrad)" opacity="0.65" class="transition-all" />
-              <rect id="hondaLed4" x="128" y="3" width="34" height="16" rx="2" fill="url(#elioAccentGrad)" opacity="0.75" class="transition-all" />
-              <rect id="hondaLed5" x="172" y="3" width="34" height="16" rx="2" fill="url(#elioAccentGrad)" opacity="0.85" class="transition-all" />
-              <rect id="hondaLed6" x="212" y="3" width="34" height="16" rx="2" fill="url(#elioAccentGrad)" opacity="0.95" class="transition-all" />
-              <rect id="hondaLed7" x="252" y="3" width="34" height="16" rx="2" fill="url(#elioAccentGrad)" opacity="1" style="filter: drop-shadow(0 0 6px var(--theme-glow));" class="transition-all" />
-              <!-- High-RPM Peak Shift Warning LEDs -->
-              <rect id="hondaLed8" x="296" y="3" width="34" height="16" rx="2" fill="url(#elioAccentGrad)" opacity="0.35" class="transition-all" />
-              <rect id="hondaLed9" x="336" y="3" width="34" height="16" rx="2" fill="url(#elioAccentGrad)" opacity="0.35" class="transition-all" />
-              <rect id="hondaLed10" x="376" y="3" width="34" height="16" rx="2" fill="url(#elioAccentGrad)" opacity="0.35" class="transition-all" />
-            </g>
-
-            <!-- LEFT GEOMETRIC TACHYMETER WING (y=36 to 334) -->
-            <g transform="translate(8, 36)">
-              <polygon class="elio-wing" points="0,0 110,0 95,298 0,298" fill="rgba(8,12,22,0.65)" stroke="rgba(255,255,255,0.1)" stroke-width="1" />
-              <path class="elio-wing-top" d="M 16,0 L 94,0" stroke="url(#elioAccentGrad)" stroke-width="2.5" />
-              
-              <!-- Segmented Speed Arc -->
-              <path d="M 7,280 L 7,40" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="5" stroke-linecap="round" />
-              <path id="hondaSpeedBlade" d="M 7,280 L 7,40" fill="none" stroke="url(#elioAccentGrad)" stroke-width="5" stroke-linecap="butt" stroke-dasharray="240" stroke-dashoffset="100" style="filter: drop-shadow(0 0 14px var(--theme-glow));" class="transition-all duration-300" />
-              
-              <text x="14" y="26" fill="url(#elioAccentGrad)" font-size="10" font-family="monospace" font-weight="black">WAKTU JALAN</text>
-              <text x="14" y="46" fill="#F8FAFC" font-size="13" font-family="monospace" font-weight="bold"><tspan class="live-time">0:00:00</tspan></text>
-              
-              <line x1="14" y1="68" x2="96" y2="68" stroke="rgba(255,255,255,0.08)" />
-
-              <text x="14" y="90" fill="#64748B" font-size="8" font-family="monospace">TRIP ODO</text>
-              <text x="14" y="112" fill="#F8FAFC" font-size="14" font-family="monospace" font-weight="bold"><tspan class="live-trip-km">0.0</tspan> km</text>
-
-              <line x1="14" y1="134" x2="96" y2="134" stroke="rgba(255,255,255,0.08)" />
-
-              <text x="14" y="156" fill="#64748B" font-size="8" font-family="monospace">KETINGGIAN</text>
-              <text x="14" y="176" fill="url(#elioAccentGrad)" font-size="11" font-family="monospace" font-weight="bold"><tspan class="live-alt-num">0</tspan> mdpl</text>
-              <text x="14" y="198" fill="#64748B" font-size="8" font-family="monospace">KEC. MAKS</text>
-              <text x="14" y="216" fill="url(#elioAccentGrad)" font-size="11" font-family="monospace" font-weight="bold"><tspan class="live-max">0</tspan> km/h</text>
-
-              <line x1="14" y1="230" x2="96" y2="230" stroke="rgba(255,255,255,0.08)" />
-              <text x="14" y="252" fill="#64748B" font-size="7.5" font-family="monospace">TABLET SENSOR ACC</text>
-              <text x="14" y="272" fill="url(#elioAccentGrad)" font-size="9" font-family="monospace" font-weight="bold">USB 5V • <tspan class="live-acc-status">ACTIVE</tspan></text>
-              <text x="14" y="290" fill="#64748B" font-size="7.5" font-family="monospace">BAT: <tspan class="live-battery-status">--%</tspan></text>
-            </g>
-
-            <!-- RIGHT GEOMETRIC WING (Honda LogR Multi-Info & G-Meter, y=36 to 334) -->
-            <g transform="translate(322, 36)">
-              <polygon class="elio-wing" points="0,0 110,0 110,298 15,298" fill="rgba(8,12,22,0.65)" stroke="rgba(255,255,255,0.1)" stroke-width="1" />
-              <path class="elio-wing-top" d="M 16,0 L 94,0" stroke="url(#elioAccentGrad)" stroke-width="2.5" />
-              
-              <text x="14" y="24" fill="url(#elioAccentGrad)" font-size="9.5" font-family="monospace" font-weight="black">LogR // G-METER</text>
-              
-              <!-- Circular G-Force Crosshair Radar in Theme Accent -->
-              <circle cx="55" cy="92" r="44" fill="none" stroke="url(#elioAccentGrad)" stroke-opacity="0.3" stroke-width="1.2" />
-              <circle cx="55" cy="92" r="24" fill="none" stroke="url(#elioAccentGrad)" stroke-opacity="0.15" stroke-width="1" />
-              <line x1="11" y1="92" x2="99" y2="92" stroke="url(#elioAccentGrad)" stroke-opacity="0.25" stroke-width="1" />
-              <line x1="55" y1="48" x2="55" y2="136" stroke="url(#elioAccentGrad)" stroke-opacity="0.25" stroke-width="1" />
-              <!-- Dynamic Moving G-Ball in Theme Accent -->
-              <circle id="hondaGBall" cx="64" cy="84" r="6" fill="url(#elioAccentGrad)" style="filter: drop-shadow(0 0 12px var(--theme-glow));" class="transition-all duration-150" />
-              
-              <text x="14" y="156" fill="url(#elioAccentGrad)" font-size="9.5" font-family="monospace" font-weight="bold" id="hondaGText">+0.00G ACCEL</text>
-
-              <line x1="14" y1="174" x2="96" y2="174" stroke="rgba(255,255,255,0.08)" />
-
-              <text x="14" y="196" fill="#64748B" font-size="8" font-family="monospace">GNSS SATELLITES</text>
-              <text class="live-sats-val" x="14" y="216" fill="url(#elioAccentGrad)" font-size="9" font-family="monospace" font-weight="bold">0/0 SATS</text>
-
-              <line x1="14" y1="236" x2="96" y2="236" stroke="rgba(255,255,255,0.08)" />
-
-              <text x="14" y="258" fill="#64748B" font-size="8" font-family="monospace">SUHU BATERAI</text>
-              <text x="14" y="278" fill="url(#elioAccentGrad)" font-size="9" font-family="monospace" font-weight="bold"><tspan class="live-btemp">--</tspan>°C</text>
-              <text x="14" y="296" fill="#64748B" font-size="7.5" font-family="monospace">HEADING: <tspan class="live-heading-val">N 0°</tspan></text>
-            </g>
-
-            <!-- CENTER CYBER SPEED BRACKET (130, 36, w=180, h=298) -->
-            <g transform="translate(130, 36)">
-              <polygon points="18,0 162,0 180,18 180,280 162,298 18,298 0,280 0,18" class="elio-wing" fill="rgba(6,10,20,0.92)" stroke="rgba(255,255,255,0.12)" stroke-width="1.8" />
-              <path class="elio-wing-top" d="M 30,0 L 150,0 M 30,298 L 150,298" stroke="url(#elioAccentGrad)" stroke-width="3" />
-              
-              <!-- Cyber corner calipers -->
-              <path class="elio-frame-line" d="M 8,24 L 8,8 L 24,8" fill="none" stroke="url(#elioAccentGrad)" stroke-width="2" />
-              <path class="elio-frame-line" d="M 172,24 L 172,8 L 156,8" fill="none" stroke="url(#elioAccentGrad)" stroke-width="2" />
-              <path class="elio-frame-line" d="M 8,274 L 8,290 L 24,290" fill="none" stroke="url(#elioAccentGrad)" stroke-width="2" />
-              <path class="elio-frame-line" d="M 172,274 L 172,290 L 156,290" fill="none" stroke="url(#elioAccentGrad)" stroke-width="2" />
-              
-              <circle cx="90" cy="149" r="75" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="1.5" />
-            </g>
+        <div class="as-bmw-m-badge" aria-hidden="true">
+          <i style="background:#00a8ff"></i><i style="background:#1d4ed8"></i><i style="background:#e11d48"></i><span>M</span>
+        </div>
+        <div class="as-chip as-bmw-chip">
+          <svg class="as-chip-ico" viewBox="0 0 24 24" fill="none">
+            <path d="M7 20L10.2 4M17 20L13.8 4" stroke="#e2e8f0" stroke-width="1.8" stroke-linecap="round"/>
+            <path d="M12 5v2.5M12 10.5v3M12 16.5V20" stroke="#e2e8f0" stroke-width="1.6" stroke-linecap="round"/>
           </svg>
-
-          <!-- Center Readout Inside Honda Cyber Pod -->
-          <div class="absolute inset-0 flex flex-col items-center justify-center text-center mt-3 pointer-events-none">
-            <!-- +R Mode Badge with Theme Accent Glow -->
-            <div class="px-3 py-0.5 rounded bg-[var(--theme-accent)]/20 border border-[var(--theme-accent)]/60 flex items-center gap-1 shadow-md">
-              <span class="w-1.5 h-1.5 rounded-full bg-[var(--theme-accent)] animate-ping"></span>
-              <span class="text-[8px] font-mono font-black tracking-widest text-white">+R MODE</span>
-            </div>
-
-            <!-- Big Italicized Cyber Speed Readout -->
-            <div class="flex items-baseline justify-center skew-speed my-1">
-              <span id="hondaSpeedDisplay" class="font-mono font-black text-6xl sm:text-7xl tracking-tighter text-white" style="text-shadow: 0 0 24px var(--theme-glow);">84</span>
-              <span class="text-xs font-mono font-black tracking-widest text-[var(--theme-accent)] ml-1">KM/H</span>
-            </div>
-
-            <!-- VTEC Indicator Status in Theme Accent -->
-            <div class="text-[9px] font-mono font-bold text-slate-300 flex items-center gap-1.5 mt-1">
-              <span class="w-1.5 h-1.5 rounded-full bg-[var(--theme-accent)] animate-pulse"></span>
-              <span class="text-[var(--theme-accent)]">HONDA TYPE R // CYBER COCKPIT</span>
-            </div>
-          </div>
+          <div><small>JARAK</small><b><span class="live-trip-km">0.0</span> km</b></div>
         </div>
+      </div>
 
-        <!-- STYLE 5: ELIO NEON (TOYOTA INNOVA REBORN EDITION — STANDALONE, NO ECU/GEAR) -->
-        <div id="cluster_elio" class="hidden as-new-theme as-elio-theme">
-          <div class="as-top-chips">
-            <div class="as-chip">
-              <svg class="as-chip-ico" viewBox="0 0 24 24" fill="none">
-                <path d="M10 2h4M12 14l3-3M12 6a8 8 0 1 0 0 16 8 8 0 0 0 0-16z" stroke="#e2e8f0" stroke-width="1.8" stroke-linecap="round"/>
-                <path d="M18.5 7.5l1.5-1.5" stroke="#e2e8f0" stroke-width="1.8" stroke-linecap="round"/>
-              </svg>
-              <div><small>WAKTU JALAN</small><b class="live-time">0:00:00</b></div>
-            </div>
-            <div class="as-chip">
-              <svg class="as-chip-ico" viewBox="0 0 24 24" fill="none">
-                <path d="M7 20L10.2 4M17 20L13.8 4" stroke="#e2e8f0" stroke-width="1.8" stroke-linecap="round"/>
-                <path d="M12 5v2.5M12 10.5v3M12 16.5V20" stroke="#e2e8f0" stroke-width="1.6" stroke-linecap="round"/>
-              </svg>
-              <div><small>JARAK</small><b><span class="live-trip-km">0.0</span> km</b></div>
-            </div>
-          </div>
+      <!-- Tight Full-Press ViewBox (0 0 420 310): Blades press edge-to-edge -->
+      <div class="as-stage">
+        <svg class="as-stage-svg" viewBox="0 0 420 310" preserveAspectRatio="xMidYMid meet">
+          <defs>
+            <linearGradient id="bmwBladeBlue" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#38bdf8" stop-opacity="0.95"/><stop offset="52%" stop-color="#0284c7" stop-opacity="0.72"/><stop offset="100%" stop-color="#0ea5e9" stop-opacity="0.16"/></linearGradient>
+            <linearGradient id="bmwBladeRed" x1="1" y1="0" x2="0" y2="0"><stop offset="0%" stop-color="#ff2e55" stop-opacity="0.95"/><stop offset="52%" stop-color="#dc2626" stop-opacity="0.72"/><stop offset="100%" stop-color="#ef4444" stop-opacity="0.16"/></linearGradient>
+            <radialGradient id="bmwHexBg" cx="50%" cy="42%" r="60%"><stop offset="0%" stop-color="#142342" stop-opacity="0.75"/><stop offset="65%" stop-color="#070e20" stop-opacity="0.9"/><stop offset="100%" stop-color="#03060f" stop-opacity="0.96"/></radialGradient>
+            <radialGradient id="bmwFlareB" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#38bdf8" stop-opacity="0.6"/><stop offset="50%" stop-color="#0284c7" stop-opacity="0.2"/><stop offset="100%" stop-color="#0284c7" stop-opacity="0"/></radialGradient>
+            <radialGradient id="bmwFlareR" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#ff2e55" stop-opacity="0.6"/><stop offset="50%" stop-color="#b91c1c" stop-opacity="0.2"/><stop offset="100%" stop-color="#b91c1c" stop-opacity="0"/></radialGradient>
+            <clipPath id="clipBmwL"><path d="M 134 18 L 62 18 L 10 132 L 66 238 L 138 238 L 94 132 Z"/></clipPath>
+            <clipPath id="clipBmwR"><path d="M 286 18 L 358 18 L 410 132 L 354 238 L 282 238 L 326 132 Z"/></clipPath>
+          </defs>
+          <ellipse cx="32" cy="132" rx="75" ry="100" fill="url(#bmwFlareB)"/>
+          <ellipse cx="388" cy="132" rx="75" ry="100" fill="url(#bmwFlareR)"/>
+          <path d="M 142 14 L 278 14 L 330 132 L 278 242 L 142 242 L 90 132 Z" fill="url(#bmwHexBg)" stroke="rgba(148,163,184,0.18)" stroke-width="1.2"/>
 
-          <div class="as-stage">
-            <svg class="as-stage-svg" viewBox="0 0 560 350" preserveAspectRatio="xMidYMid meet">
-              <defs>
-                <linearGradient id="elioNeonArc" x1="0" y1="0" x2="1" y2="0">
-                  <stop offset="0%" style="stop-color: var(--theme-accent)"/>
-                  <stop offset="48%" stop-color="#3b82f6"/>
-                  <stop offset="100%" style="stop-color: var(--theme-accent-2)"/>
-                </linearGradient>
-                <linearGradient id="elioHorizonFade" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stop-color="#050714" stop-opacity="0"/>
-                  <stop offset="42%" stop-color="#050714" stop-opacity="0.88"/>
-                  <stop offset="100%" stop-color="#050714" stop-opacity="1"/>
-                </linearGradient>
-                <linearGradient id="elioRoadL" x1="0" y1="1" x2="1" y2="0">
-                  <stop offset="0%" style="stop-color: var(--theme-accent-2)"/>
-                  <stop offset="55%" style="stop-color: var(--theme-accent)"/>
-                  <stop offset="100%" style="stop-color: var(--theme-accent)" stop-opacity="0"/>
-                </linearGradient>
-                <linearGradient id="elioRoadR" x1="1" y1="1" x2="0" y2="0">
-                  <stop offset="0%" style="stop-color: var(--theme-accent-2)"/>
-                  <stop offset="55%" style="stop-color: var(--theme-accent)"/>
-                  <stop offset="100%" style="stop-color: var(--theme-accent)" stop-opacity="0"/>
-                </linearGradient>
-                <radialGradient id="elioAmbient" cx="50%" cy="46%" r="48%">
-                  <stop offset="42%" stop-color="#0b102c" stop-opacity="0.08"/>
-                  <stop offset="76%" style="stop-color: var(--theme-accent)" stop-opacity="0.22"/>
-                  <stop offset="92%" style="stop-color: var(--theme-accent-2)" stop-opacity="0.16"/>
-                  <stop offset="100%" stop-color="#04050e" stop-opacity="0"/>
-                </radialGradient>
-              </defs>
-              <circle cx="280" cy="182" r="174" fill="url(#elioAmbient)"/>
-              <!-- Outer soft halo arc (lightweight, no heavy SVG blur) -->
-              <path d="M 122 248 A 162 162 0 1 1 438 248" fill="none" stroke="url(#elioNeonArc)" stroke-width="14" stroke-linecap="round" opacity="0.22"/>
-              <path d="M 122 248 A 162 162 0 1 1 438 248" fill="none" stroke="url(#elioNeonArc)" stroke-width="6" stroke-linecap="round"/>
-              <path id="elioArcProgress" d="M 122 248 A 162 162 0 1 1 438 248" fill="none" stroke="#ffffff" stroke-opacity="0.72" stroke-width="2.4" stroke-linecap="round" stroke-dasharray="645" stroke-dashoffset="645"/>
-              <g id="elioTicks" stroke="#e2e8f0" stroke-linecap="round"></g>
-              <g id="elioNumbers" fill="#f1f5f9" font-size="14" font-weight="600" font-style="italic" text-anchor="middle"></g>
-              <circle cx="280" cy="176" r="88" fill="rgba(7, 10, 28, 0.72)" stroke="rgba(148, 163, 184, 0.28)" stroke-width="1.5"/>
-              <text id="elioSpeedDisplay" x="280" y="196" text-anchor="middle" fill="#ffffff" font-size="82" font-weight="800" font-style="italic" letter-spacing="-3">0</text>
-              <text class="as-unit-label" x="280" y="224" text-anchor="middle" fill="#cbd5e1" font-size="16" font-style="italic">km/h</text>
-              <!-- Horizon fade & perspective road -->
-              <rect x="0" y="232" width="560" height="118" fill="url(#elioHorizonFade)"/>
-              <path d="M 22 344 L 228 264" stroke="url(#elioRoadL)" stroke-width="4" opacity="0.85"/>
-              <path d="M 538 344 L 332 264" stroke="url(#elioRoadR)" stroke-width="4" opacity="0.85"/>
-              <path d="M 164 334 L 184 316" stroke="#ffffff" stroke-width="3.6" stroke-linecap="round" opacity="0.88"/>
-              <path d="M 204 298 L 216 286" stroke="#93c5fd" stroke-width="2.2" stroke-linecap="round" opacity="0.55"/>
-              <path d="M 396 334 L 376 316" stroke="#ffffff" stroke-width="3.6" stroke-linecap="round" opacity="0.88"/>
-              <path d="M 356 298 L 344 286" stroke="#93c5fd" stroke-width="2.2" stroke-linecap="round" opacity="0.55"/>
-            </svg>
-            <div class="as-car-wrap">
-              <div class="as-car-glow"></div>
-              <img class="as-car-img" src="innova-reborn.png" alt="Toyota Innova Reborn"/>
-            </div>
-          </div>
+          <!-- Left Wide Luminous Blue Blade + Outer Accent Bias Rim -->
+          <path d="M 134 18 L 62 18 L 10 132 L 66 238 L 138 238 L 94 132 Z" fill="rgba(14, 58, 110, 0.28)" stroke="rgba(56,189,248,0.28)" stroke-width="1"/>
+          <g clip-path="url(#clipBmwL)">
+            <rect id="bmwMLFill" x="6" y="238" width="136" height="0" fill="url(#bmwBladeBlue)"/>
+            <rect id="bmwMLCap" x="6" y="238" width="136" height="4" fill="#e0f2fe" opacity="0"/>
+          </g>
+          <path d="M 66 238 L 10 132 L 62 18" fill="none" stroke="var(--theme-accent)" stroke-width="6" stroke-linejoin="round" opacity="0.28"/>
+          <path d="M 66 238 L 10 132 L 62 18" fill="none" stroke="var(--theme-accent)" stroke-width="2.2" stroke-linejoin="round" opacity="0.92"/>
 
-          <div class="as-sensor-strip">
-            <div class="as-s-pill"><small>KEC. MAX</small><b class="as-accent"><span class="live-max">0</span> <span class="as-unit-sm">km/h</span></b></div>
-            <div class="as-s-pill"><small>MDPL</small><b><span class="live-alt-num">--</span> m</b></div>
-            <div class="as-s-pill"><small>KOMPAS</small><b class="as-accent live-heading-val">--</b></div>
-            <div class="as-s-pill"><small>G-FORCE</small><b id="elioGDisplay">0.00 G</b></div>
-            <div class="as-s-pill"><small>SUHU BAT</small><b><span class="live-btemp">--</span>°C</b></div>
-          </div>
+          <!-- Right Wide Luminous Red Blade + Outer Accent Bias Rim -->
+          <path d="M 286 18 L 358 18 L 410 132 L 354 238 L 282 238 L 326 132 Z" fill="rgba(110, 14, 34, 0.28)" stroke="rgba(255,46,85,0.28)" stroke-width="1"/>
+          <g clip-path="url(#clipBmwR)">
+            <rect id="bmwMRFill" x="278" y="238" width="136" height="0" fill="url(#bmwBladeRed)"/>
+            <rect id="bmwMRCap" x="278" y="238" width="136" height="4" fill="#ffe4e6" opacity="0"/>
+          </g>
+          <path d="M 354 238 L 410 132 L 358 18" fill="none" stroke="var(--theme-accent)" stroke-width="6" stroke-linejoin="round" opacity="0.28"/>
+          <path d="M 354 238 L 410 132 L 358 18" fill="none" stroke="var(--theme-accent)" stroke-width="2.2" stroke-linejoin="round" opacity="0.92"/>
+
+          <g fill="#f1f5f9" font-size="13" font-weight="700" font-style="italic" text-anchor="end">
+            <text x="122" y="34">240</text><text x="104" y="64">200</text><text x="86" y="98">160</text>
+            <text x="80" y="134">120</text><text x="92" y="168">80</text><text x="108" y="202">40</text><text x="124" y="232">0</text>
+          </g>
+          <g fill="#f1f5f9" font-size="13.5" font-weight="700" font-style="italic" text-anchor="start">
+            <text x="298" y="34">7</text><text x="318" y="68">6</text><text x="334" y="102">5</text>
+            <text x="342" y="134">4</text><text x="330" y="168">3</text><text x="314" y="202">2</text><text x="298" y="232">0</text>
+          </g>
+
+          <text class="as-unit-label" x="210" y="56" text-anchor="middle" fill="#94a3b8" font-size="12" font-style="italic">km/h</text>
+          <text id="bmwMSpeedDisplay" x="210" y="142" text-anchor="middle" fill="#ffffff" font-size="84" font-weight="800" font-style="italic" letter-spacing="-3">0</text>
+          <text class="as-unit-label" x="210" y="170" text-anchor="middle" fill="#cbd5e1" font-size="14" font-style="italic">km/h</text>
+
+          <path d="M 14 304 L 154 244" stroke="#00d2ff" stroke-width="3.6" opacity="0.88"/>
+          <path d="M 406 304 L 266 244" stroke="#ff1e42" stroke-width="3.6" opacity="0.88"/>
+          <path d="M 114 296 L 134 278" stroke="#ffffff" stroke-width="3.4" stroke-linecap="round" opacity="0.9"/>
+          <path d="M 306 296 L 286 278" stroke="#ffffff" stroke-width="3.4" stroke-linecap="round" opacity="0.9"/>
+        </svg>
+        <div class="as-car-wrap">
+          <div class="as-car-glow as-car-glow-bmw"></div>
+          <img class="as-car-img" src="innova-reborn.png" alt="Toyota Innova Reborn"/>
         </div>
+      </div>
 
-        <!-- STYLE 6: BMW M SPORT LIVE COCKPIT (TOYOTA INNOVA REBORN EDITION — STANDALONE, NO ECU/GEAR) -->
-        <div id="cluster_bmw_m" class="hidden as-new-theme as-bmw-theme">
-          <div class="as-top-chips">
-            <div class="as-chip as-bmw-chip">
-              <svg class="as-chip-ico" viewBox="0 0 24 24" fill="none">
-                <path d="M10 2h4M12 14l3-3M12 6a8 8 0 1 0 0 16 8 8 0 0 0 0-16z" stroke="#e2e8f0" stroke-width="1.8" stroke-linecap="round"/>
-              </svg>
-              <div><small>WAKTU JALAN</small><b class="live-time">0:00:00</b></div>
-            </div>
-            <div class="as-bmw-m-badge" aria-hidden="true">
-              <i style="background:#00a8ff"></i><i style="background:#1d4ed8"></i><i style="background:#e11d48"></i><span>M</span>
-            </div>
-            <div class="as-chip as-bmw-chip">
-              <svg class="as-chip-ico" viewBox="0 0 24 24" fill="none">
-                <path d="M7 20L10.2 4M17 20L13.8 4" stroke="#e2e8f0" stroke-width="1.8" stroke-linecap="round"/>
-                <path d="M12 5v2.5M12 10.5v3M12 16.5V20" stroke="#e2e8f0" stroke-width="1.6" stroke-linecap="round"/>
-              </svg>
-              <div><small>JARAK</small><b><span class="live-trip-km">0.0</span> km</b></div>
-            </div>
-          </div>
-
-          <div class="as-stage">
-            <svg class="as-stage-svg" viewBox="0 0 560 320" preserveAspectRatio="xMidYMid meet">
-              <defs>
-                <linearGradient id="bmwBladeBlue" x1="0" y1="0" x2="1" y2="0">
-                  <stop offset="0%" stop-color="#00d2ff" stop-opacity="0.88"/>
-                  <stop offset="38%" stop-color="#1d4ed8" stop-opacity="0.52"/>
-                  <stop offset="100%" stop-color="#061226" stop-opacity="0.14"/>
-                </linearGradient>
-                <linearGradient id="bmwBladeRed" x1="1" y1="0" x2="0" y2="0">
-                  <stop offset="0%" stop-color="#ff1e42" stop-opacity="0.90"/>
-                  <stop offset="38%" stop-color="#b91c1c" stop-opacity="0.52"/>
-                  <stop offset="100%" stop-color="#1c0812" stop-opacity="0.14"/>
-                </linearGradient>
-                <radialGradient id="bmwHexBg" cx="50%" cy="42%" r="60%">
-                  <stop offset="0%" stop-color="#142342" stop-opacity="0.72"/>
-                  <stop offset="65%" stop-color="#070e20" stop-opacity="0.88"/>
-                  <stop offset="100%" stop-color="#03060f" stop-opacity="0.96"/>
-                </radialGradient>
-                <radialGradient id="bmwFlareB" cx="50%" cy="50%" r="50%">
-                  <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.65"/>
-                  <stop offset="50%" stop-color="#0284c7" stop-opacity="0.22"/>
-                  <stop offset="100%" stop-color="#0284c7" stop-opacity="0"/>
-                </radialGradient>
-                <radialGradient id="bmwFlareR" cx="50%" cy="50%" r="50%">
-                  <stop offset="0%" stop-color="#ff2e55" stop-opacity="0.65"/>
-                  <stop offset="50%" stop-color="#b91c1c" stop-opacity="0.22"/>
-                  <stop offset="100%" stop-color="#b91c1c" stop-opacity="0"/>
-                </radialGradient>
-                <linearGradient id="bmwStreakL" x1="0" y1="0" x2="1" y2="0">
-                  <stop offset="0%" stop-color="#00d2ff" stop-opacity="0"/>
-                  <stop offset="48%" stop-color="#38bdf8" stop-opacity="0.58"/>
-                  <stop offset="100%" stop-color="#e0f2fe" stop-opacity="0"/>
-                </linearGradient>
-                <linearGradient id="bmwStreakR" x1="1" y1="0" x2="0" y2="0">
-                  <stop offset="0%" stop-color="#ff1e42" stop-opacity="0"/>
-                  <stop offset="48%" stop-color="#ff2e55" stop-opacity="0.58"/>
-                  <stop offset="100%" stop-color="#ffe4e6" stop-opacity="0"/>
-                </linearGradient>
-                <linearGradient id="bmwRoadB" x1="0" y1="1" x2="1" y2="0">
-                  <stop offset="0%" stop-color="#00d2ff"/>
-                  <stop offset="100%" stop-color="#00d2ff" stop-opacity="0"/>
-                </linearGradient>
-                <linearGradient id="bmwRoadR" x1="1" y1="1" x2="0" y2="0">
-                  <stop offset="0%" stop-color="#ff1e42"/>
-                  <stop offset="100%" stop-color="#ff1e42" stop-opacity="0"/>
-                </linearGradient>
-              </defs>
-              <!-- Volumetric light flares behind blades -->
-              <ellipse cx="44" cy="142" rx="95" ry="110" fill="url(#bmwFlareB)"/>
-              <ellipse cx="516" cy="142" rx="95" ry="110" fill="url(#bmwFlareR)"/>
-              <!-- Center hexagonal carbon-glass shield -->
-              <path d="M 206 16 L 354 16 L 418 142 L 354 252 L 206 252 L 142 142 Z" fill="url(#bmwHexBg)" stroke="rgba(148,163,184,0.18)" stroke-width="1.2"/>
-              <path d="M 218 28 L 342 28 L 398 142 L 342 242 L 218 242 L 162 142 Z" fill="none" stroke="rgba(56,189,248,0.12)" stroke-width="1"/>
-              <!-- Horizon motion light streaks & subtle road grid -->
-              <path d="M 0 264 L 220 250 L 0 282 Z" fill="url(#bmwStreakL)" opacity="0.55"/>
-              <path d="M 560 264 L 340 250 L 560 282 Z" fill="url(#bmwStreakR)" opacity="0.55"/>
-              <g stroke="rgba(56,189,248,0.16)" stroke-width="1">
-                <line x1="120" y1="274" x2="440" y2="274"/>
-                <line x1="78" y1="292" x2="482" y2="292"/>
-                <line x1="36" y1="310" x2="524" y2="310"/>
-              </g>
-              <!-- Left Electric Blue Blade -->
-              <path d="M 192 26 L 106 26 L 26 142 L 112 246 L 198 246 L 146 142 Z" fill="url(#bmwBladeBlue)"/>
-              <path d="M 192 26 L 106 26 L 26 142 L 112 246 L 198 246" fill="none" stroke="#00d2ff" stroke-width="4.5" stroke-linejoin="round"/>
-              <path d="M 192 26 L 106 26 L 26 142 L 112 246 L 198 246" fill="none" stroke="#e0f2fe" stroke-width="1.3" stroke-linejoin="round"/>
-              <path id="bmwMBlueProgress" d="M 112 246 L 26 142 L 106 26" fill="none" stroke="#38bdf8" stroke-width="9" stroke-linejoin="round" stroke-dasharray="285" stroke-dashoffset="285" opacity="0.88"/>
-              <!-- Right Crimson Red Blade -->
-              <path d="M 368 26 L 454 26 L 534 142 L 448 246 L 362 246 L 414 142 Z" fill="url(#bmwBladeRed)"/>
-              <path d="M 368 26 L 454 26 L 534 142 L 448 246 L 362 246" fill="none" stroke="#ff1e42" stroke-width="4.5" stroke-linejoin="round"/>
-              <path d="M 368 26 L 454 26 L 534 142 L 448 246 L 362 246" fill="none" stroke="#ffe4e6" stroke-width="1.3" stroke-linejoin="round"/>
-              <path id="bmwMRedProgress" d="M 448 246 L 534 142 L 454 26" fill="none" stroke="#ff2e55" stroke-width="9" stroke-linejoin="round" stroke-dasharray="285" stroke-dashoffset="285" opacity="0.88"/>
-              <!-- Left Speed Scale -->
-              <g fill="#f1f5f9" font-size="13.5" font-weight="700" font-style="italic" text-anchor="end">
-                <text x="176" y="42">240</text><text x="150" y="64">220</text><text x="130" y="88">200</text>
-                <text x="112" y="114">180</text><text x="104" y="142">160</text><text x="118" y="170">120</text>
-                <text x="136" y="196">80</text><text x="154" y="220">40</text><text x="172" y="241">0</text>
-              </g>
-              <!-- Right G/Load Scale -->
-              <g fill="#f1f5f9" font-size="14" font-weight="700" font-style="italic" text-anchor="start">
-                <text x="386" y="44">7</text><text x="414" y="72">6</text><text x="438" y="102">5</text>
-                <text x="454" y="136">4</text><text x="442" y="168">3</text><text x="424" y="196">2</text>
-                <text x="406" y="220">1</text><text x="388" y="241">0</text>
-              </g>
-              <!-- Center Speed Readout (Standalone GPS, no transmission P/D/R) -->
-              <text class="as-unit-label" x="280" y="64" text-anchor="middle" fill="#94a3b8" font-size="13" font-style="italic">km/h</text>
-              <text id="bmwMSpeedDisplay" x="280" y="150" text-anchor="middle" fill="#ffffff" font-size="84" font-weight="800" font-style="italic" letter-spacing="-3">0</text>
-              <text class="as-unit-label" x="280" y="178" text-anchor="middle" fill="#cbd5e1" font-size="15" font-style="italic">km/h</text>
-              <!-- Perspective Highway -->
-              <path d="M 35 314 L 222 252" stroke="url(#bmwRoadB)" stroke-width="3.6"/>
-              <path d="M 525 314 L 338 252" stroke="url(#bmwRoadR)" stroke-width="3.6"/>
-              <path d="M 164 306 L 188 286" stroke="#ffffff" stroke-width="3.8" stroke-linecap="round" opacity="0.9"/>
-              <path d="M 396 306 L 372 286" stroke="#ffffff" stroke-width="3.8" stroke-linecap="round" opacity="0.9"/>
-            </svg>
-            <div class="as-car-wrap">
-              <div class="as-car-glow as-car-glow-bmw"></div>
-              <img class="as-car-img" src="innova-reborn.png" alt="Toyota Innova Reborn"/>
-            </div>
-          </div>
-
-          <div class="as-bmw-metrics">
-            <div class="as-bmw-card">
-              <svg class="as-m-ico" viewBox="0 0 24 24" fill="none"><path d="M4 16a8 8 0 1 1 16 0M12 12l4-3" stroke="#38bdf8" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="14" r="1.8" fill="#fff"/></svg>
-              <div><small>KEC. MAX</small><b><span class="live-max">0</span> <span class="as-unit-sm">km/h</span></b></div>
-            </div>
-            <div class="as-bmw-card">
-              <svg class="as-m-ico" viewBox="0 0 24 24" fill="none"><path d="M3 19l6-10 4 6 3-4 5 8H3z" stroke="#e2e8f0" stroke-width="1.8" stroke-linejoin="round"/></svg>
-              <div><small>KETINGGIAN</small><b><span class="live-alt-num">--</span> mdpl</b></div>
-            </div>
-            <div class="as-bmw-card">
-              <svg class="as-m-ico" viewBox="0 0 24 24" fill="none"><path d="M14 14.8V5a2 2 0 1 0-4 0v9.8a4 4 0 1 0 4 0z" stroke="#f87171" stroke-width="1.8"/><circle cx="12" cy="17" r="1.5" fill="#f87171"/></svg>
-              <div><small>SUHU BAT</small><b><span class="live-btemp">--</span>°C</b></div>
-            </div>
-            <div class="as-bmw-card">
-              <svg class="as-m-ico" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.5" stroke="#38bdf8" stroke-width="1.7"/><path d="M12 7l2.5 5-2.5 5-2.5-5z" fill="#38bdf8"/></svg>
-              <div><small>KOMPAS / G</small><b><span class="live-heading-val">--</span> · <span id="bmwMGDisplay">0.0G</span></b></div>
-            </div>
-          </div>
+      <div class="as-bmw-metrics">
+        <div class="as-bmw-card">
+          <svg class="as-m-ico" viewBox="0 0 24 24" fill="none"><path d="M4 16a8 8 0 1 1 16 0M12 12l4-3" stroke="#38bdf8" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="14" r="1.8" fill="#fff"/></svg>
+          <div><small>KEC. MAX</small><b><span class="live-max">0</span> <span class="as-unit-sm">km/h</span></b></div>
         </div>
+        <div class="as-bmw-card">
+          <svg class="as-m-ico" viewBox="0 0 24 24" fill="none"><path d="M3 19l6-10 4 6 3-4 5 8H3z" stroke="#e2e8f0" stroke-width="1.8" stroke-linejoin="round"/></svg>
+          <div><small>KETINGGIAN</small><b><span class="live-alt-num">--</span> m</b></div>
+        </div>
+        <div class="as-bmw-card">
+          <svg class="as-m-ico" viewBox="0 0 24 24" fill="none"><path d="M14 14.8V5a2 2 0 1 0-4 0v9.8a4 4 0 1 0 4 0z" stroke="#f87171" stroke-width="1.8"/><circle cx="12" cy="17" r="1.5" fill="#f87171"/></svg>
+          <div><small>SUHU BAT</small><b><span class="live-btemp">--</span>°C</b></div>
+        </div>
+        <div class="as-bmw-card">
+          <svg class="as-m-ico" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.5" stroke="#38bdf8" stroke-width="1.7"/><path d="M12 7l2.5 5-2.5 5-2.5-5z" fill="#38bdf8"/></svg>
+          <div><small>KOMPAS / G</small><b><span class="live-heading-val">--</span> · <span id="bmwMGDisplay">0.0G</span></b></div>
+        </div>
+      </div>
+    </div>
   </section>
 </div>
 
@@ -835,22 +452,18 @@
     v = String(v);
     document.querySelectorAll(sel).forEach(function (e) { if (e.textContent !== v) e.textContent = v; });
   }
-  function tpl(sel, token, v) {
-    if (v === undefined || v === null) return;
-    document.querySelectorAll(sel).forEach(function (e) {
-      if (!e.getAttribute('data-tpl')) e.setAttribute('data-tpl', e.textContent);
-      var t = e.getAttribute('data-tpl').replace(token, v);
-      if (e.textContent !== t) e.textContent = t;
-    });
-  }
   window.ElioBridge = {
     live: function (d) {
       set('.live-trip-km', d.trip); set('.live-alt-num', d.alt); set('.live-heading-val', d.head);
-      set('.live-sats-val', d.sats); set('.live-gnss-status', d.gnss); set('.live-max', d.max);
-      set('.live-avg', d.avg); set('.live-btemp', d.btemp); set('.live-time', d.time);
-      tpl('.live-acc-status', 'ACTIVE', d.acc); tpl('.live-battery-status', '--', d.bat);
-      set('.live-sats-num', String(d.sats || '').replace(/^[^\x00-\x7F]+\s*/, '').replace(/\s*SATS$/, ''));
-      set('.live-m3info', 'ALT ' + d.alt + ' m  \u2022  ' + d.head + '  \u2022  ' + String(d.sats || '').replace(/^[^\x00-\x7F]+\s*/, ''));
+      set('.live-max', d.max); set('.live-avg', d.avg); set('.live-btemp', d.btemp); set('.live-time', d.time);
+      var satsRaw = String(d.sats || '').replace(/^[^\x00-\x7F]+\s*/, '').replace(/\s*SATS$/, '');
+      var hasFix = String(d.gnss || '').indexOf('3D FIX') !== -1;
+      document.querySelectorAll('.live-sat-badge').forEach(function (el) {
+        var txt = hasFix ? satsRaw : ('\u26A0 NO SAT');
+        if (el.textContent !== txt) el.textContent = txt;
+        el.classList.toggle('as-ok', hasFix);
+        el.classList.toggle('as-warn', !hasFix);
+      });
     }
   };
 })();

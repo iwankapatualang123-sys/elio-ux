@@ -155,3 +155,4 @@ class DockIconView(ctx: Context, private val kind: Int) : View(ctx) {
         const val SETTINGS = 4
     }
 }
+

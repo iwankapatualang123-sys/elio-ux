@@ -9,6 +9,8 @@ import android.graphics.Color
 import android.graphics.Point
 import android.graphics.Rect
 import android.graphics.Typeface
+import android.graphics.drawable.ColorDrawable
+import android.graphics.drawable.GradientDrawable
 import android.hardware.SensorManager
 import android.os.Build
 import android.os.Bundle
@@ -23,6 +25,7 @@ import android.view.WindowManager
 import android.widget.FrameLayout
 import android.widget.GridLayout
 import android.widget.HorizontalScrollView
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.SeekBar
@@ -412,15 +415,27 @@ class MainActivity : Activity() {
             toast(LOCK_MSG)
             return
         }
-        AlertDialog.Builder(this, DIALOG)
-            .setTitle("Pilih Tema / Gaya Speedometer")
-            .setItems(STYLE_NAMES) { _, which ->
-                prefs.gaugeStyle = which
+        val listBox = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(10), dp(8), dp(10), dp(10))
+        }
+        var dlgRef: AlertDialog? = null
+        val activeIdx = prefs.gaugeStyle.coerceIn(0, STYLE_NAMES.size - 1)
+        STYLE_NAMES.forEachIndexed { idx, name ->
+            val isActive = idx == activeIdx
+            val row = modernSettingRow(
+                title = name,
+                badgeText = if (isActive) "AKTIF" else "PILIH",
+                badgeKind = if (isActive) 1 else 2
+            ) {
+                dlgRef?.dismiss()
+                prefs.gaugeStyle = idx
                 setGauge()
-                toast("Tema: ${STYLE_NAMES[which]}")
+                toast("Tema: $name")
             }
-            .setNegativeButton("Batal", null)
-            .showLeft()
+            listBox.addView(row)
+        }
+        dlgRef = showModernCard("❖ PILIH TEMA SPEEDOMETER", "6 Tema HD Full-Press", listBox)
     }
 
     private fun updateSlotButtons() {
@@ -487,7 +502,7 @@ class MainActivity : Activity() {
             ramText.text = "RAM ${hub.ramFreeMb()} MB"
         }
         indicator.set(link.cellLevel, link.wifiLevel, hub.batteryPct, hub.charging, tick)
-        gpsText.text = hub.gpsStatus()
+        updateGpsWarning(hub.gpsStatus())
 
         val h = if (!hub.headingDeg.isNaN()) hub.headingDeg else hub.gpsBearing
         tileValues[T_HEAD]?.text = if (h.isNaN()) "—" else "${h.roundToInt() % 360}° ${cardinal(h)}"
@@ -525,6 +540,63 @@ class MainActivity : Activity() {
         autoBrightness()
     }
 
+    private var lastGpsState = -1
+
+    /** Tampilkan peringatan jelas di kartu status atas jika tidak ada satelit yang konek. */
+    private fun updateGpsWarning(raw: String) {
+        val fix = raw.startsWith("GPS ")
+        val state: Int
+        val displayText: String
+        val fgColor: Int
+        val bgColor: Int
+        val strokeColor: Int
+
+        when {
+            fix && hub.satsUsed > 0 -> {
+                state = 2
+                displayText = "● $raw"
+                fgColor = Color.parseColor("#34D399")
+                bgColor = Color.parseColor("#1A10B981")
+                strokeColor = Color.parseColor("#5534D399")
+            }
+            !raw.startsWith("Mencari") && !fix -> {
+                state = 0
+                displayText = "⚠ GPS MATI / PERLU IZIN"
+                fgColor = Color.parseColor("#FCA5A5")
+                bgColor = Color.parseColor("#2EEF4444")
+                strokeColor = Color.parseColor("#88F87171")
+            }
+            hub.satsUsed == 0 && hub.satsVisible == 0 -> {
+                state = 0
+                displayText = "⚠ TIDAK ADA SATELIT (0/0)"
+                fgColor = Color.parseColor("#FCA5A5")
+                bgColor = Color.parseColor("#2EEF4444")
+                strokeColor = Color.parseColor("#88F87171")
+            }
+            else -> {
+                state = 1
+                displayText = "⚠ MENCARI SATELIT (${hub.satsUsed}/${hub.satsVisible})"
+                fgColor = Color.parseColor("#FDE68A")
+                bgColor = Color.parseColor("#2BF59E0B")
+                strokeColor = Color.parseColor("#88FBBF24")
+            }
+        }
+
+        gpsText.text = displayText
+        if (state != lastGpsState) {
+            lastGpsState = state
+            gpsText.setTextColor(fgColor)
+            gpsText.typeface = Typeface.create("sans-serif-condensed", Typeface.BOLD)
+            gpsText.setPadding(dp(8), dp(2), dp(8), dp(2))
+            gpsText.background = GradientDrawable().apply {
+                shape = GradientDrawable.RECTANGLE
+                cornerRadius = dp(8).toFloat()
+                setColor(bgColor)
+                setStroke(dp(1), strokeColor)
+            }
+        }
+    }
+
     /** Data sensor untuk panel samping template speedometer. */
     private fun pushLive(heading: Float, alt: Double) {
         val g = gauge ?: return
@@ -535,8 +607,11 @@ class MainActivity : Activity() {
         o.put("trip", f("%.1f", hub.tripMeters / 1000.0))
         o.put("alt", if (alt.isNaN()) "--" else f("%.0f", alt))
         o.put("head", if (heading.isNaN()) "--" else "${cardinalEn(heading)} ${heading.roundToInt() % 360}\u00B0")
-        o.put("sats", "$dot ${hub.satsUsed}/${hub.satsVisible} SATS")
-        o.put("gnss", if (fix) "$dot 3D FIX (${hub.satsUsed})" else "$dot GNSS SEARCH")
+        o.put("sats", if (hub.satsUsed > 0) "$dot ${hub.satsUsed}/${hub.satsVisible} SATS" else "⚠ NO SAT (${hub.satsUsed}/${hub.satsVisible})")
+        o.put("gnss", if (fix && hub.satsUsed > 0) "$dot 3D FIX (${hub.satsUsed})" else "⚠ NO SATELIT")
+        o.put("satsUsed", hub.satsUsed)
+        o.put("satsVisible", hub.satsVisible)
+        o.put("gpsFix", fix && hub.satsUsed > 0)
         o.put("max", f("%.0f", hub.tripMaxMps * 3.6f))
         o.put("avg", if (hub.tripMovingSec > 5.0) f("%.0f", hub.tripMeters / hub.tripMovingSec * 3.6) else "0")
         o.put("btemp", if (hub.batteryTempC.isNaN()) "--" else f("%.0f", hub.batteryTempC))
@@ -622,6 +697,25 @@ class MainActivity : Activity() {
         }
     }
 
+    /** Tukar posisi aplikasi panel atas (A) dan panel bawah (B) dalam 1 ketukan. */
+    private fun swapPanels() {
+        if (moving()) {
+            toast(LOCK_MSG)
+            return
+        }
+        val tmp = prefs.panelA
+        prefs.panelA = prefs.panelB
+        prefs.panelB = tmp
+        updateSlotButtons()
+        applyInsets()
+        val aName = engine.labelOf(prefs.panelA)
+        val bName = engine.labelOf(prefs.panelB)
+        toast("Ditukar: Atas $aName ⇅ Bawah $bName")
+        if (panelsActive) {
+            startPanels()
+        }
+    }
+
     /** Peringatan baterai lemah di bawah 20% dan 10% saat tidak dicas; hilang sendiri saat dicas. */
     private fun checkBattery() {
         val pct = hub.batteryPct
@@ -703,16 +797,263 @@ class MainActivity : Activity() {
         }
     }
 
-    // ---------- Dialog ----------
+    // ---------- Dialog Modern Floating Card ----------
 
-    private fun launchables(): List<Pair<String, String>> {
+    private class AppEntry(
+        val pkg: String,
+        val label: String,
+        val icon: android.graphics.drawable.Drawable
+    )
+
+    private fun launchablesWithIcons(): List<AppEntry> {
         val pm = packageManager
         val q = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
         return pm.queryIntentActivities(q, 0)
-            .map { it.activityInfo.packageName to it.loadLabel(pm).toString() }
-            .filter { it.first != packageName }
-            .distinctBy { it.first }
-            .sortedBy { it.second.lowercase() }
+            .filter { it.activityInfo.packageName != packageName }
+            .distinctBy { it.activityInfo.packageName }
+            .map {
+                AppEntry(
+                    it.activityInfo.packageName,
+                    it.loadLabel(pm).toString(),
+                    it.loadIcon(pm)
+                )
+            }
+            .sortedBy { it.label.lowercase(Locale.US) }
+    }
+
+    /** Kartu melayang modern (dark-glass + bingkai neon) yang tetap di kolom kiri agar Maps/YouTube tidak tertutup. */
+    @Suppress("DEPRECATION")
+    private fun showModernCard(title: String, subtitle: String?, body: View): AlertDialog {
+        val card = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            background = GradientDrawable().apply {
+                shape = GradientDrawable.RECTANGLE
+                cornerRadius = dp(16).toFloat()
+                setColor(Color.parseColor("#F5080D1B"))
+                setStroke(dp(2), (Pal.accent and 0x00FFFFFF) or 0xCC000000.toInt())
+            }
+            elevation = dp(12).toFloat()
+        }
+
+        val header = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(dp(14), dp(12), dp(10), dp(10))
+        }
+        val titleCol = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+        }
+        val titleTv = TextView(this).apply {
+            text = title
+            setTextColor(Color.parseColor("#F8FAFC"))
+            textSize = 14.5f
+            typeface = Typeface.create("sans-serif-condensed", Typeface.BOLD)
+            maxLines = 1
+            ellipsize = TextUtils.TruncateAt.END
+        }
+        titleCol.addView(titleTv)
+        if (!subtitle.isNullOrBlank()) {
+            val subTv = TextView(this).apply {
+                text = subtitle
+                setTextColor(Color.parseColor("#94A3B8"))
+                textSize = 10.5f
+                maxLines = 1
+                ellipsize = TextUtils.TruncateAt.END
+            }
+            titleCol.addView(subTv)
+        }
+
+        var dlgRef: AlertDialog? = null
+        val closeBtn = TextView(this).apply {
+            text = "✕"
+            setTextColor(Color.parseColor("#CBD5E1"))
+            textSize = 14f
+            gravity = Gravity.CENTER
+            typeface = Typeface.DEFAULT_BOLD
+            background = GradientDrawable().apply {
+                shape = GradientDrawable.RECTANGLE
+                cornerRadius = dp(9).toFloat()
+                setColor(Color.parseColor("#1E293B"))
+                setStroke(dp(1), Color.parseColor("#334155"))
+            }
+            setOnClickListener { dlgRef?.dismiss() }
+        }
+        header.addView(titleCol, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
+        header.addView(closeBtn, LinearLayout.LayoutParams(dp(30), dp(30)).apply { leftMargin = dp(8) })
+        card.addView(header, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
+
+        val divider = View(this).apply {
+            setBackgroundColor(Color.parseColor("#22324A"))
+        }
+        card.addView(divider, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(1)))
+
+        val real = Point()
+        windowManager.defaultDisplay.getRealSize(real)
+        val maxScrollH = (real.y * 0.72f).toInt().coerceAtLeast(dp(260))
+
+        val scroll = object : ScrollView(this) {
+            override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+                val capped = MeasureSpec.makeMeasureSpec(maxScrollH, MeasureSpec.AT_MOST)
+                super.onMeasure(widthMeasureSpec, capped)
+            }
+        }.apply {
+            isVerticalScrollBarEnabled = true
+            addView(body, ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
+        }
+        card.addView(scroll, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
+
+        val dlg = AlertDialog.Builder(this, DIALOG)
+            .setView(card)
+            .create()
+        dlgRef = dlg
+        dlg.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+        dlg.show()
+        place(dlg)
+        return dlg
+    }
+
+    /** Baris pengaturan bergaya kartu modern dengan pil status berwarna (0=MATI, 1=AKTIF, 2=NILAI/AKSI). */
+    private fun modernSettingRow(
+        title: String,
+        badgeText: String,
+        badgeKind: Int,
+        onClick: () -> Unit
+    ): LinearLayout {
+        val row = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(dp(11), dp(9), dp(10), dp(9))
+            background = GradientDrawable().apply {
+                shape = GradientDrawable.RECTANGLE
+                cornerRadius = dp(10).toFloat()
+                setColor(Color.parseColor("#11192D"))
+                setStroke(dp(1), Color.parseColor("#21304C"))
+            }
+            isClickable = true
+            isFocusable = true
+            setOnClickListener { onClick() }
+        }
+        val titleTv = TextView(this).apply {
+            text = title
+            setTextColor(Color.parseColor("#F1F5F9"))
+            textSize = 12.2f
+            typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
+            maxLines = 2
+            ellipsize = TextUtils.TruncateAt.END
+        }
+        val (fg, bg, border) = when (badgeKind) {
+            1 -> Triple(Color.parseColor("#34D399"), Color.parseColor("#13382D"), Color.parseColor("#2D7A5E"))
+            2 -> Triple(Color.parseColor("#38BDF8"), Color.parseColor("#0D2A42"), Color.parseColor("#1E5A8A"))
+            else -> Triple(Color.parseColor("#94A3B8"), Color.parseColor("#1A2336"), Color.parseColor("#2E3C56"))
+        }
+        val pill = TextView(this).apply {
+            text = badgeText
+            setTextColor(fg)
+            textSize = 10.2f
+            typeface = Typeface.create("sans-serif-condensed", Typeface.BOLD)
+            setPadding(dp(8), dp(3), dp(8), dp(3))
+            maxLines = 1
+            ellipsize = TextUtils.TruncateAt.END
+            background = GradientDrawable().apply {
+                shape = GradientDrawable.RECTANGLE
+                cornerRadius = dp(7).toFloat()
+                setColor(bg)
+                setStroke(dp(1), border)
+            }
+        }
+        row.addView(titleTv, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f).apply { rightMargin = dp(8) })
+        row.addView(pill, LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT))
+        row.layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
+            bottomMargin = dp(5)
+        }
+        return row
+    }
+
+    /** Tombol pintasan cepat di bagian atas kartu Pengaturan. */
+    private fun modernQuickBtn(iconText: String, label: String, highlight: Boolean, onClick: () -> Unit): LinearLayout {
+        val btn = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER
+            setPadding(dp(6), dp(9), dp(6), dp(8))
+            background = GradientDrawable().apply {
+                shape = GradientDrawable.RECTANGLE
+                cornerRadius = dp(11).toFloat()
+                setColor(if (highlight) Color.parseColor("#0E2942") else Color.parseColor("#121B30"))
+                setStroke(dp(1), if (highlight) Color.parseColor("#38BDF8") else Color.parseColor("#283755"))
+            }
+            isClickable = true
+            isFocusable = true
+            setOnClickListener { onClick() }
+        }
+        val ico = TextView(this).apply {
+            text = iconText
+            setTextColor(if (highlight) Color.parseColor("#38BDF8") else Color.parseColor("#E2E8F0"))
+            textSize = 15f
+            gravity = Gravity.CENTER
+            typeface = Typeface.DEFAULT_BOLD
+        }
+        val lbl = TextView(this).apply {
+            text = label
+            setTextColor(if (highlight) Color.parseColor("#E0F2FE") else Color.parseColor("#CBD5E1"))
+            textSize = 10.2f
+            gravity = Gravity.CENTER
+            maxLines = 1
+            ellipsize = TextUtils.TruncateAt.END
+            typeface = Typeface.create("sans-serif-condensed", Typeface.BOLD)
+            setPadding(0, dp(2), 0, 0)
+        }
+        btn.addView(ico)
+        btn.addView(lbl)
+        return btn
+    }
+
+    /** Grid 3 kolom ikon aplikasi asli Android untuk laci aplikasi & pemilihan panel. */
+    private fun buildAppIconGrid(list: List<AppEntry>, onPick: (AppEntry) -> Unit): GridLayout {
+        val grid = GridLayout(this).apply {
+            columnCount = 3
+            setPadding(dp(8), dp(8), dp(8), dp(10))
+        }
+        for (app in list) {
+            val tile = LinearLayout(this).apply {
+                orientation = LinearLayout.VERTICAL
+                gravity = Gravity.CENTER
+                setPadding(dp(6), dp(10), dp(6), dp(8))
+                background = GradientDrawable().apply {
+                    shape = GradientDrawable.RECTANGLE
+                    cornerRadius = dp(12).toFloat()
+                    setColor(Color.parseColor("#111A2E"))
+                    setStroke(dp(1), Color.parseColor("#223250"))
+                }
+                isClickable = true
+                isFocusable = true
+                setOnClickListener { onPick(app) }
+            }
+            val iv = ImageView(this).apply {
+                setImageDrawable(app.icon)
+                scaleType = ImageView.ScaleType.FIT_CENTER
+            }
+            val tv = TextView(this).apply {
+                text = app.label
+                setTextColor(Color.parseColor("#E2E8F0"))
+                textSize = 10.5f
+                gravity = Gravity.CENTER
+                maxLines = 1
+                ellipsize = TextUtils.TruncateAt.END
+                typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
+                setPadding(0, dp(5), 0, 0)
+            }
+            tile.addView(iv, LinearLayout.LayoutParams(dp(40), dp(40)))
+            tile.addView(tv, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
+            val lp = GridLayout.LayoutParams().apply {
+                width = 0
+                height = ViewGroup.LayoutParams.WRAP_CONTENT
+                columnSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f)
+                rowSpec = GridLayout.spec(GridLayout.UNDEFINED)
+                setMargins(dp(4), dp(4), dp(4), dp(4))
+            }
+            grid.addView(tile, lp)
+        }
+        return grid
     }
 
     private fun pickApp(forA: Boolean) {
@@ -720,15 +1061,20 @@ class MainActivity : Activity() {
             toast(LOCK_MSG)
             return
         }
-        val list = launchables()
-        AlertDialog.Builder(this, DIALOG)
-            .setTitle(if (forA) "Pilih aplikasi panel A" else "Pilih aplikasi panel B")
-            .setItems(list.map { it.second }.toTypedArray()) { _, i ->
-                if (forA) prefs.panelA = list[i].first else prefs.panelB = list[i].first
-                updateSlotButtons()
-            }
-            .setNegativeButton("Batal", null)
-            .showLeft()
+        val list = launchablesWithIcons()
+        var dlgRef: AlertDialog? = null
+        val grid = buildAppIconGrid(list) { app ->
+            dlgRef?.dismiss()
+            if (forA) prefs.panelA = app.pkg else prefs.panelB = app.pkg
+            updateSlotButtons()
+            applyInsets()
+            toast(if (forA) "Panel Atas (A): ${app.label}" else "Panel Bawah (B): ${app.label}")
+        }
+        dlgRef = showModernCard(
+            if (forA) "❖ PILIH PANEL ATAS (A)" else "❖ PILIH PANEL BAWAH (B)",
+            "Ketuk ikon aplikasi yang ingin dipasang",
+            grid
+        )
     }
 
     private fun drawer() {
@@ -736,17 +1082,20 @@ class MainActivity : Activity() {
             toast(LOCK_MSG)
             return
         }
-        val list = launchables()
-        AlertDialog.Builder(this, DIALOG)
-            .setTitle("Semua aplikasi")
-            .setItems(list.map { it.second }.toTypedArray()) { _, i ->
-                engine.launch(list[i].first, null, isInMultiWindowMode)
-            }
-            .setNegativeButton("Tutup", null)
-            .showLeft()
+        val list = launchablesWithIcons()
+        var dlgRef: AlertDialog? = null
+        val grid = buildAppIconGrid(list) { app ->
+            dlgRef?.dismiss()
+            engine.launch(app.pkg, null, isInMultiWindowMode)
+        }
+        dlgRef = showModernCard(
+            "❖ SEMUA APLIKASI",
+            "${list.size} aplikasi terpasang · Ketuk untuk buka",
+            grid
+        )
     }
 
-    private fun onOff(b: Boolean) = if (b) "aktif" else "mati"
+    private fun onOff(b: Boolean) = if (b) "AKTIF" else "MATI"
 
     private fun gradName(): String {
         for (i in GRAD_NAMES.indices) {
@@ -760,141 +1109,191 @@ class MainActivity : Activity() {
             toast(LOCK_MSG)
             return
         }
-        val entries = listOf<Pair<String, () -> Unit>>(
-            "Tema / Gaya Speedometer: ${STYLE_NAMES[prefs.gaugeStyle.coerceIn(0, STYLE_NAMES.size - 1)]}" to { askStyle() },
-            "Mulai ${prefs.panelCount} Jendela Split (Maps + YouTube)" to { startPanels() },
-            "Mode Layar Penuh (tutup ruang split)" to {
-                panelsActive = false
-                applyInsets()
-                toast("Mode layar penuh aktif")
-            },
-            "Sensor & Diagnostik Perangkat" to { showSensors() },
-            "Reset Trip (jarak, kec. maks, waktu jalan)" to {
-                hub.resetTrip()
-                toast("Data trip direset")
-            },
-            "Pilih Aplikasi Panel A (${engine.labelOf(prefs.panelA)})" to { pickApp(true) },
-            "Pilih Aplikasi Panel B (${engine.labelOf(prefs.panelB)})" to { pickApp(false) },
-            "Satuan: ${if (prefs.useMph) "mph" else "km/jam"}" to {
-                prefs.useMph = !prefs.useMph
-                setGauge()
-                showSettings()
-            },
-            "Warna gradasi: ${gradName()}" to { askAccent() },
-            "Hemat speedometer (grid & lampu template diam): ${onOff(prefs.eco)}" to {
-                prefs.eco = !prefs.eco
-                setGauge()
-                applyEffects()
-                showSettings()
-            },
-            "Equalizer musik: ${EQ_NAMES[prefs.eqMode.coerceIn(0, EQ_NAMES.size - 1)]}" to {
-                prefs.eqMode = (prefs.eqMode + 1) % EQ_NAMES.size
-                if (prefs.eqMode > 0 && !hasAudioPermission()) {
-                    requestPermissions(arrayOf(Manifest.permission.RECORD_AUDIO), REQ_AUDIO)
-                }
-                setGauge()
-                applyEffects()
-                showSettings()
-            },
-            "Bingkai (layar, speedometer, kartu, menu): ${if (prefs.frameRunning) "Berjalan (gradasi)" else "Diam"}" to {
-                prefs.frameRunning = !prefs.frameRunning
-                setGauge()
-                applyEffects()
-                showSettings()
-            },
-            "Hemat bingkai (lebih jarang digambar, tanpa pendar): ${onOff(prefs.ecoFrame)}" to {
-                prefs.ecoFrame = !prefs.ecoFrame
-                setGauge()
-                applyEffects()
-                showSettings()
-            },
-            "Hemat equalizer (16 batang, 15 fps): ${onOff(prefs.ecoEq)}" to {
-                prefs.ecoEq = !prefs.ecoEq
-                setGauge()
-                applyEffects()
-                showSettings()
-            },
-            "Kecepatan warna berjalan: ${FRAME_SPEED_NAMES[prefs.frameSpeed.coerceIn(0, FRAME_SPEED_NAMES.size - 1)]}" to {
-                prefs.frameSpeed = (prefs.frameSpeed + 1) % FRAME_SPEEDS.size
-                setGauge()
-                applyEffects()
-                showSettings()
-            },
-            "Tampilkan kotak sensor di bawah: ${onOff(prefs.showTiles)}" to {
-                prefs.showTiles = !prefs.showTiles
-                recreate()
-            },
-            "Lebar panel speedometer: ${prefs.leftPercent}%" to { askRatio() },
-            "Jumlah jendela: ${prefs.panelCount} (speedometer + ${prefs.panelCount - 1} aplikasi)" to {
-                prefs.panelCount = if (prefs.panelCount >= 3) 2 else 3
-                updateSlotButtons()
-                applyInsets()
-                showSettings()
-            },
-            "Susunan: ${if (prefs.entertainmentLayout) "Hiburan (video besar)" else "Navigasi (peta besar)"}" to {
-                prefs.entertainmentLayout = !prefs.entertainmentLayout
-                applyInsets()
-                showSettings()
-            },
-            "Aktif otomatis saat dicas: ${onOff(prefs.autoOnCharge)}" to {
-                prefs.autoOnCharge = !prefs.autoOnCharge
+        var dlgRef: AlertDialog? = null
+        val container = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(10), dp(10), dp(10), dp(10))
+        }
+
+        // 1. Baris Pintasan Cepat (Tukar Atas/Bawah, Tema, Layar Penuh)
+        val quickRow = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+        }
+        val btnSwap = modernQuickBtn("⇅", "Tukar A/B", true) {
+            dlgRef?.dismiss()
+            swapPanels()
+        }
+        val btnTheme = modernQuickBtn("❖", "Tema", false) {
+            dlgRef?.dismiss()
+            askStyle()
+        }
+        val btnFull = modernQuickBtn("⛶", "Layar Penuh", false) {
+            dlgRef?.dismiss()
+            panelsActive = false
+            applyInsets()
+            toast("Mode layar penuh aktif")
+        }
+        quickRow.addView(btnSwap, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.15f).apply { rightMargin = dp(5) })
+        quickRow.addView(btnTheme, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 0.9f).apply { rightMargin = dp(5) })
+        quickRow.addView(btnFull, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 0.95f))
+        container.addView(quickRow, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
+            bottomMargin = dp(7)
+        })
+
+        // Indikator posisi panel Atas & Bawah saat ini
+        val posChip = TextView(this).apply {
+            text = "Atas (A): ${engine.labelOf(prefs.panelA)}   ⇅   Bawah (B): ${engine.labelOf(prefs.panelB)}"
+            setTextColor(Color.parseColor("#7DD3FC"))
+            textSize = 10.5f
+            gravity = Gravity.CENTER
+            typeface = Typeface.create("sans-serif-condensed", Typeface.BOLD)
+            setPadding(dp(8), dp(5), dp(8), dp(5))
+            background = GradientDrawable().apply {
+                shape = GradientDrawable.RECTANGLE
+                cornerRadius = dp(8).toFloat()
+                setColor(Color.parseColor("#0B1F33"))
+                setStroke(dp(1), Color.parseColor("#1A4366"))
+            }
+        }
+        container.addView(posChip, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
+            bottomMargin = dp(9)
+        })
+
+        fun addRow(title: String, badge: String, kind: Int, action: () -> Unit) {
+            container.addView(modernSettingRow(title, badge, kind) {
+                dlgRef?.dismiss()
+                action()
+            })
+        }
+
+        // Semua fitur pengaturan bawaan tetap 100% utuh
+        addRow("Tema / Gaya Speedometer", STYLE_NAMES[prefs.gaugeStyle.coerceIn(0, STYLE_NAMES.size - 1)].substringBefore(" ("), 2) { askStyle() }
+        addRow("Mulai ${prefs.panelCount} Jendela Split (Auto-Resize)", "MULAI", 1) { startPanels() }
+        addRow("Tukar Posisi Aplikasi Atas ⇅ Bawah", "TUKAR", 2) { swapPanels() }
+        addRow("Pilih Aplikasi Panel Atas (A)", engine.labelOf(prefs.panelA), 2) { pickApp(true) }
+        addRow("Pilih Aplikasi Panel Bawah (B)", engine.labelOf(prefs.panelB), 2) { pickApp(false) }
+        addRow("Sensor & Diagnostik Perangkat", "BUKA ›", 2) { showSensors() }
+        addRow("Reset Trip (jarak, maks, waktu)", "RESET", 0) {
+            hub.resetTrip()
+            toast("Data trip direset")
+        }
+        addRow("Satuan Kecepatan", if (prefs.useMph) "MPH" else "KM/JAM", 2) {
+            prefs.useMph = !prefs.useMph
+            setGauge()
+            showSettings()
+        }
+        addRow("Warna Gradasi Bingkai", gradName(), 2) { askAccent() }
+        addRow("Hemat Speedometer (diam)", onOff(prefs.eco), if (prefs.eco) 1 else 0) {
+            prefs.eco = !prefs.eco
+            setGauge()
+            applyEffects()
+            showSettings()
+        }
+        addRow("Equalizer Musik", EQ_NAMES[prefs.eqMode.coerceIn(0, EQ_NAMES.size - 1)], if (prefs.eqMode > 0) 1 else 0) {
+            prefs.eqMode = (prefs.eqMode + 1) % EQ_NAMES.size
+            if (prefs.eqMode > 0 && !hasAudioPermission()) {
+                requestPermissions(arrayOf(Manifest.permission.RECORD_AUDIO), REQ_AUDIO)
+            }
+            setGauge()
+            applyEffects()
+            showSettings()
+        }
+        addRow("Bingkai Neon Berjalan", if (prefs.frameRunning) "JALAN" else "DIAM", if (prefs.frameRunning) 1 else 0) {
+            prefs.frameRunning = !prefs.frameRunning
+            setGauge()
+            applyEffects()
+            showSettings()
+        }
+        addRow("Hemat Bingkai (ringan)", onOff(prefs.ecoFrame), if (prefs.ecoFrame) 1 else 0) {
+            prefs.ecoFrame = !prefs.ecoFrame
+            setGauge()
+            applyEffects()
+            showSettings()
+        }
+        addRow("Hemat Equalizer (15 fps)", onOff(prefs.ecoEq), if (prefs.ecoEq) 1 else 0) {
+            prefs.ecoEq = !prefs.ecoEq
+            setGauge()
+            applyEffects()
+            showSettings()
+        }
+        addRow("Kecepatan Warna Bingkai", FRAME_SPEED_NAMES[prefs.frameSpeed.coerceIn(0, FRAME_SPEED_NAMES.size - 1)].substringBefore(" ("), 2) {
+            prefs.frameSpeed = (prefs.frameSpeed + 1) % FRAME_SPEEDS.size
+            setGauge()
+            applyEffects()
+            showSettings()
+        }
+        addRow("Kotak Sensor Bawah", onOff(prefs.showTiles), if (prefs.showTiles) 1 else 0) {
+            prefs.showTiles = !prefs.showTiles
+            recreate()
+        }
+        addRow("Lebar Panel Speedometer", "${prefs.leftPercent}%", 2) { askRatio() }
+        addRow("Jumlah Jendela Split", "${prefs.panelCount} PANEL", 2) {
+            prefs.panelCount = if (prefs.panelCount >= 3) 2 else 3
+            updateSlotButtons()
+            applyInsets()
+            showSettings()
+        }
+        addRow("Susunan Jendela Kanan", if (prefs.entertainmentLayout) "HIBURAN" else "NAVIGASI", 2) {
+            prefs.entertainmentLayout = !prefs.entertainmentLayout
+            applyInsets()
+            showSettings()
+        }
+        addRow("Aktif Otomatis Saat Dicas", onOff(prefs.autoOnCharge), if (prefs.autoOnCharge) 1 else 0) {
+            prefs.autoOnCharge = !prefs.autoOnCharge
+            syncChargeService()
+            showSettings()
+        }
+        addRow("Mulai Panel Otomatis Saat Dicas", onOff(prefs.autoStartPanels), if (prefs.autoStartPanels) 1 else 0) {
+            prefs.autoStartPanels = !prefs.autoStartPanels
+            showSettings()
+        }
+        addRow("Pop-up Matikan Saat Charger Cabut", onOff(prefs.askOnUnplug), if (prefs.askOnUnplug) 1 else 0) {
+            prefs.askOnUnplug = !prefs.askOnUnplug
+            syncChargeService()
+            showSettings()
+        }
+        addRow("Izin Kunci Layar Otomatis", if (ShutdownActivity.isAdminActive(this)) "AKTIF" else "IZINKAN", if (ShutdownActivity.isAdminActive(this)) 1 else 0) {
+            if (ShutdownActivity.isAdminActive(this)) toast("Izin kunci layar sudah aktif")
+            else ShutdownActivity.requestAdmin(this, REQ_ADMIN)
+        }
+        addRow("Coba Pop-up Matikan Unit", "TEST", 2) { ShutdownActivity.show(this) }
+        val psBadge = if (prefs.powerSaveOnLock && !PowerSaver.canControl(this)) "IZIN ADB" else onOff(prefs.powerSaveOnLock)
+        addRow("Hemat Daya Saat Terkunci", psBadge, if (prefs.powerSaveOnLock) 1 else 0) {
+            if (prefs.powerSaveOnLock && !PowerSaver.canControl(this)) {
+                showAdbHelp()
+            } else {
+                prefs.powerSaveOnLock = !prefs.powerSaveOnLock
                 syncChargeService()
-                showSettings()
-            },
-            "Mulai panel otomatis saat dicas: ${onOff(prefs.autoStartPanels)}" to {
-                prefs.autoStartPanels = !prefs.autoStartPanels
-                showSettings()
-            },
-            "Pop-up matikan unit saat charger dicabut: ${onOff(prefs.askOnUnplug)}" to {
-                prefs.askOnUnplug = !prefs.askOnUnplug
-                syncChargeService()
-                showSettings()
-            },
-            "Izin kunci layar: ${if (ShutdownActivity.isAdminActive(this)) "sudah aktif" else "belum aktif (ketuk)"}" to {
-                if (ShutdownActivity.isAdminActive(this)) toast("Izin kunci layar sudah aktif")
-                else ShutdownActivity.requestAdmin(this, REQ_ADMIN)
-            },
-            "Coba pop-up matikan unit" to { ShutdownActivity.show(this) },
-            "Hemat daya saat terkunci: ${onOff(prefs.powerSaveOnLock)}${if (prefs.powerSaveOnLock && !PowerSaver.canControl(this)) " (perlu izin, ketuk)" else ""}" to {
-                if (prefs.powerSaveOnLock && !PowerSaver.canControl(this)) {
-                    showAdbHelp()
-                } else {
-                    prefs.powerSaveOnLock = !prefs.powerSaveOnLock
-                    syncChargeService()
-                    if (prefs.powerSaveOnLock && !PowerSaver.canControl(this)) showAdbHelp() else showSettings()
-                }
-            },
-            "Bluetooth nyala saat layar on: ${onOff(prefs.btOnScreenOn)}" to {
-                prefs.btOnScreenOn = !prefs.btOnScreenOn
-                syncChargeService()
-                showSettings()
-            },
-            "Wi-Fi nyala saat layar on: ${onOff(prefs.wifiOnScreenOn)}" to {
-                prefs.wifiOnScreenOn = !prefs.wifiOnScreenOn
-                syncChargeService()
-                showSettings()
-            },
-            "Kecerahan otomatis (sensor cahaya): ${onOff(prefs.autoDim)}" to {
-                prefs.autoDim = !prefs.autoDim
-                showSettings()
-            },
-            "Layar tetap menyala: ${onOff(prefs.keepScreenOn)}" to {
-                prefs.keepScreenOn = !prefs.keepScreenOn
-                if (prefs.keepScreenOn) window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-                else window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-                showSettings()
-            },
-            "Paksa mode freeform (percobaan): ${onOff(prefs.forceFreeform)}" to {
-                prefs.forceFreeform = !prefs.forceFreeform
-                showSettings()
-            },
-            "Jadikan launcher utama" to { openSettings(Settings.ACTION_HOME_SETTINGS) }
-        )
-        AlertDialog.Builder(this, DIALOG)
-            .setTitle("Pengaturan")
-            .setItems(entries.map { it.first }.toTypedArray()) { _, which -> entries[which].second() }
-            .setNegativeButton("Tutup", null)
-            .showLeft()
+                if (prefs.powerSaveOnLock && !PowerSaver.canControl(this)) showAdbHelp() else showSettings()
+            }
+        }
+        addRow("Bluetooth Nyala Saat Layar On", onOff(prefs.btOnScreenOn), if (prefs.btOnScreenOn) 1 else 0) {
+            prefs.btOnScreenOn = !prefs.btOnScreenOn
+            syncChargeService()
+            showSettings()
+        }
+        addRow("Wi-Fi Nyala Saat Layar On", onOff(prefs.wifiOnScreenOn), if (prefs.wifiOnScreenOn) 1 else 0) {
+            prefs.wifiOnScreenOn = !prefs.wifiOnScreenOn
+            syncChargeService()
+            showSettings()
+        }
+        addRow("Kecerahan Otomatis (Cahaya)", onOff(prefs.autoDim), if (prefs.autoDim) 1 else 0) {
+            prefs.autoDim = !prefs.autoDim
+            showSettings()
+        }
+        addRow("Layar Tetap Menyala", onOff(prefs.keepScreenOn), if (prefs.keepScreenOn) 1 else 0) {
+            prefs.keepScreenOn = !prefs.keepScreenOn
+            if (prefs.keepScreenOn) window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+            else window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+            showSettings()
+        }
+        addRow("Paksa Mode Freeform", onOff(prefs.forceFreeform), if (prefs.forceFreeform) 1 else 0) {
+            prefs.forceFreeform = !prefs.forceFreeform
+            showSettings()
+        }
+        addRow("Jadikan Launcher Utama", "ATUR ›", 2) { openSettings(Settings.ACTION_HOME_SETTINGS) }
+
+        dlgRef = showModernCard("⚙ PENGATURAN ELIO UX", "Konfigurasi Cockpit & Split-Screen", container)
     }
 
     private fun askAccent() {

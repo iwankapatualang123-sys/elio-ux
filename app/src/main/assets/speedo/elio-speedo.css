@@ -452,3 +452,51 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+
+/* =============================================================================
+   HD FULL-PRESS LANDSCAPE BARS FOR ALL 4 CLASSIC THEMES + SATELIT WARNING
+   ============================================================================= */
+.elio-speedo .as-hd-theme { gap: 6px; padding: 5px 5px 4px; }
+.elio-speedo .as-mazda-theme { background: radial-gradient(circle at 50% 48%, rgba(34, 10, 20, 0.88) 0%, rgba(9, 5, 10, 0.94) 68%, rgba(4, 3, 6, 0.96) 100%); border-radius: 12px; }
+.elio-speedo .as-honda-theme { background: radial-gradient(circle at 50% 48%, rgba(36, 9, 14, 0.88) 0%, rgba(10, 6, 11, 0.94) 68%, rgba(4, 4, 8, 0.96) 100%); border-radius: 12px; }
+.elio-speedo .as-hbar {
+  position: relative; z-index: 6;
+  border-radius: 10px;
+  border: 1.5px solid rgba(var(--theme-accent-rgb, 56, 189, 248), 0.62);
+  background: linear-gradient(180deg, rgba(16, 26, 48, 0.92), rgba(7, 12, 24, 0.96));
+  padding: 5px 5px; overflow: hidden;
+}
+.elio-speedo .as-hbar-red {
+  border-color: rgba(244, 63, 94, 0.62);
+  background: linear-gradient(180deg, rgba(34, 14, 22, 0.92), rgba(12, 6, 10, 0.96));
+}
+.elio-speedo .as-hbar::before {
+  content: ""; position: absolute; top: 0; left: 16%; right: 16%; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--theme-accent), var(--theme-accent-2), transparent);
+}
+.elio-speedo .as-hbar-red::before {
+  background: linear-gradient(90deg, transparent, #fb7185, #ef4444, transparent);
+}
+.elio-speedo .as-hgrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 3px; text-align: center; }
+.elio-speedo .as-hitem {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  border-right: 1px solid rgba(255, 255, 255, 0.08); padding: 1px 2px; min-width: 0;
+}
+.elio-speedo .as-hitem:last-child { border-right: 0; }
+.elio-speedo .as-hitem small { font-size: 7px; letter-spacing: 0.06em; color: #94a3b8; font-weight: 700; white-space: nowrap; }
+.elio-speedo .as-hitem b { font-size: 11px; color: #f8fafc; font-weight: 800; margin-top: 1px; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.elio-speedo .as-hitem b.as-c { color: var(--theme-accent); }
+.elio-speedo .as-hitem b.as-r { color: #fb7185; }
+.elio-speedo .as-hitem b.as-ok { color: #34d399; }
+.elio-speedo .as-hitem b.as-warn { color: #fbbf24; }
+.elio-speedo .as-hd-stage { margin: -2px -4px; }
+.elio-speedo .as-hd-stage svg { shape-rendering: geometricPrecision; }
+.elio-speedo .as-f1-wrap { display: flex; flex-direction: column; gap: 4px; position: relative; z-index: 6; }
+.elio-speedo .as-f1-bar {
+  display: grid; grid-template-columns: repeat(10, 1fr); gap: 3px;
+  padding: 4px; border-radius: 8px;
+  background: rgba(12, 8, 12, 0.95);
+  border: 1.5px solid rgba(239, 68, 68, 0.65);
+}
+.elio-speedo .as-led { height: 11px; border-radius: 2px; background: #1e293b; }
