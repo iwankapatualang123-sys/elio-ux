@@ -105,6 +105,7 @@ class MainActivity : Activity() {
         Pal.accent2 = prefs.accent2
         Pal.frameStyle = prefs.frameStyle
         Pal.alertRed = false
+        applyOrientation()
         hub = SensorHub(this)
         link = LinkHub(this)
         engine = PanelEngine(this, prefs)
@@ -135,18 +136,39 @@ class MainActivity : Activity() {
         return d
     }
 
-    /** Dialog ditaruh di kolom speedometer kiri atas, supaya tidak tertutup jendela Maps/YouTube. */
+    private fun applyOrientation() {
+        requestedOrientation = when (prefs.orientation) {
+            1 -> android.content.pm.ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT
+            2 -> android.content.pm.ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR
+            else -> android.content.pm.ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+        }
+    }
+
+    /** Dialog ditaruh di area speedometer agar tidak tertutup jendela Maps/YouTube (mendukung Lanskap & Potret). */
     @Suppress("DEPRECATION")
     private fun place(d: AlertDialog) {
         val w = d.window ?: return
         val real = Point()
         windowManager.defaultDisplay.getRealSize(real)
-        val col = if (panelsActive && !isInMultiWindowMode) real.x * prefs.leftPercent / 100 else real.x * 45 / 100
+        val isPortrait = real.y > real.x
+        val pct = prefs.leftPercent.coerceIn(25, 65)
         w.setGravity(Gravity.TOP or Gravity.START)
         val lp = w.attributes
-        lp.x = dp(14)
-        lp.y = dp(40)
-        lp.width = (col - dp(28)).coerceAtLeast(dp(300))
+        if (isPortrait) {
+            val col = if (panelsActive && prefs.portraitTop2 && prefs.panelCount >= 3) {
+                (real.x * pct / 100).coerceAtLeast(dp(300))
+            } else {
+                real.x
+            }
+            lp.width = (col - dp(24)).coerceAtLeast(dp(290)).coerceAtMost(real.x - dp(20))
+            lp.x = if (prefs.speedoFlip && panelsActive && prefs.portraitTop2) (real.x - lp.width - dp(12)).coerceAtLeast(dp(10)) else dp(12)
+            lp.y = dp(32)
+        } else {
+            val col = if (panelsActive && !isInMultiWindowMode) real.x * pct / 100 else real.x * 45 / 100
+            lp.width = (col - dp(24)).coerceAtLeast(dp(300))
+            lp.x = if (prefs.speedoFlip && panelsActive && !isInMultiWindowMode) (real.x - lp.width - dp(14)).coerceAtLeast(dp(14)) else dp(14)
+            lp.y = dp(36)
+        }
         w.attributes = lp
     }
 
@@ -488,8 +510,10 @@ class MainActivity : Activity() {
     }
 
     /**
-     * Saat jendela aplikasi aktif, kolom speedometer disejajarkan dengan jendela: tepi atas dan
-     * bawah kartu sama persis dengan tepi jendela, sehingga garis putih keduanya bersambung.
+     * Menyesuaikan posisi & ukuran area speedometer terhadap jendela split:
+     * - Lanskap: Kiri atau Kanan (lebar leftPercent%)
+     * - Potret Atas 2 + Bawah 1: Kiri-Atas atau Kanan-Atas (lebar leftPercent%, tinggi splitRatioA%)
+     * - Potret 3 Susun: Atas atau Bawah penuh (tinggi leftPercent%)
      */
     @Suppress("DEPRECATION")
     private fun applyInsets() {
@@ -497,18 +521,46 @@ class MainActivity : Activity() {
         windowManager.defaultDisplay.getRealSize(real)
         val reserve = panelsActive && !isInMultiWindowMode
         if (reserve) {
-            val right = real.x * (100 - prefs.leftPercent) / 100
-            val top = dp(14) + dp(SlotOverlay.STRIP_DP.toInt()) - dp(3)
-            val bottom = dp(14) + dp(SlotOverlay.PAD_DP.toInt()) - dp(3)
-            root.setPadding(dp(11), top, right, bottom)
+            val isPortrait = real.y > real.x
+            val pct = prefs.leftPercent.coerceIn(25, 65)
+            val ratioA = prefs.splitRatioA.coerceIn(25, 75)
+            val topPad = dp(12) + dp(SlotOverlay.STRIP_DP.toInt()) - dp(3)
+            val botPad = dp(12) + dp(SlotOverlay.PAD_DP.toInt()) - dp(3)
+            when {
+                isPortrait && prefs.portraitTop2 && prefs.panelCount >= 3 -> {
+                    val sideOther = real.x * (100 - pct) / 100
+                    val bottomOther = real.y - (real.y * ratioA / 100) + dp(4)
+                    if (prefs.speedoFlip) {
+                        root.setPadding(sideOther, topPad, dp(10), bottomOther)
+                    } else {
+                        root.setPadding(dp(10), topPad, sideOther, bottomOther)
+                    }
+                }
+                isPortrait -> {
+                    val otherH = real.y * (100 - pct) / 100
+                    if (prefs.speedoFlip) {
+                        root.setPadding(dp(10), otherH, dp(10), botPad)
+                    } else {
+                        root.setPadding(dp(10), topPad, dp(10), otherH)
+                    }
+                }
+                else -> {
+                    val otherW = real.x * (100 - pct) / 100
+                    if (prefs.speedoFlip) {
+                        root.setPadding(otherW, topPad, dp(11), botPad)
+                    } else {
+                        root.setPadding(dp(11), topPad, otherW, botPad)
+                    }
+                }
+            }
         } else {
-            root.setPadding(dp(14), dp(12), dp(14), dp(8))
+            root.setPadding(dp(12), dp(12), dp(12), dp(10))
         }
         updateOverlay(reserve)
     }
 
     private fun updateOverlay(show: Boolean) {
-        if (!show) {
+        if (!show || prefs.freeDragMode) {
             overlay.setSlots(emptyList())
             return
         }
@@ -1347,6 +1399,34 @@ class MainActivity : Activity() {
             prefs.rollOffset = hub.rawRollDeg
             toast("Inclinometer dikalibrasi ke 0° (jalan rata)")
         }
+        addRow("Orientasi Layar", ORIENT_NAMES[prefs.orientation.coerceIn(0, ORIENT_NAMES.size - 1)], 2) {
+            prefs.orientation = (prefs.orientation + 1) % ORIENT_NAMES.size
+            applyOrientation()
+            handler.postDelayed({
+                applyInsets()
+                if (panelsActive) startPanels()
+            }, 350L)
+            toast("Orientasi: ${ORIENT_NAMES[prefs.orientation]}")
+        }
+        addRow("Susunan Mode Potret", if (prefs.portraitTop2) "ATAS 2 + BAWAH 1" else "3 SUSUN", 2) {
+            prefs.portraitTop2 = !prefs.portraitTop2
+            applyInsets()
+            if (panelsActive) startPanels()
+            showSettings()
+        }
+        addRow("Posisi Speedometer", if (prefs.speedoFlip) "KANAN / BAWAH" else "KIRI / ATAS", 2) {
+            prefs.speedoFlip = !prefs.speedoFlip
+            applyInsets()
+            if (panelsActive) startPanels()
+            showSettings()
+        }
+        addRow("Atur Ukuran Semua Area", "${prefs.leftPercent}% · ${prefs.splitRatioA}/${100 - prefs.splitRatioA}", 2) { askRatio() }
+        addRow("Mode Bebas Geser Jendela", onOff(prefs.freeDragMode), if (prefs.freeDragMode) 1 else 0) {
+            prefs.freeDragMode = !prefs.freeDragMode
+            applyInsets()
+            toast(if (prefs.freeDragMode) "Mode Bebas Geser: seret & ubah ukuran jendela sesuka hati" else "Bingkai slot aktif kembali")
+            showSettings()
+        }
         addRow("Mulai ${prefs.panelCount} Jendela Split (Auto-Resize)", "MULAI", 1) { startPanels() }
         addRow("Tukar Posisi Aplikasi Atas ⇅ Bawah", "TUKAR", 2) { swapPanels() }
         addRow("Pilih Aplikasi Panel Atas (A)", engine.labelOf(prefs.panelA), 2) { pickApp(true) }
@@ -1544,42 +1624,73 @@ class MainActivity : Activity() {
             .showLeft()
     }
 
+    /** Kartu modern 2 slider untuk membesar-kecilkan Speedometer, Panel A, dan Panel B secara langsung. */
     private fun askRatio() {
-        val label = TextView(this).apply {
-            text = "${prefs.leftPercent}%"
-            setTextColor(Pal.TEXT)
-            gravity = Gravity.CENTER
-            textSize = 18f
+        var dlgRef: AlertDialog? = null
+        val lblSpd = TextView(this).apply {
+            text = "Ukuran Area Speedometer: ${prefs.leftPercent}%"
+            setTextColor(Color.parseColor("#E2E8F0"))
+            textSize = 12.5f
+            typeface = Typeface.create("sans-serif-condensed", Typeface.BOLD)
         }
-        val sb = SeekBar(this).apply {
-            max = 35
-            progress = prefs.leftPercent - 25
+        val sbSpd = SeekBar(this).apply {
+            max = 40 // 25..65%
+            progress = (prefs.leftPercent - 25).coerceIn(0, 40)
         }
-        sb.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+        sbSpd.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(s: SeekBar?, p: Int, fromUser: Boolean) {
-                label.text = "${p + 25}%"
+                val v = p + 25
+                lblSpd.text = "Ukuran Area Speedometer: $v%"
+                if (fromUser) {
+                    prefs.leftPercent = v
+                    applyInsets()
+                }
             }
-
             override fun onStartTrackingTouch(s: SeekBar?) {}
-
             override fun onStopTrackingTouch(s: SeekBar?) {}
         })
+
+        val lblAB = TextView(this).apply {
+            val a = prefs.splitRatioA.coerceIn(25, 75)
+            text = "Proporsi Atas / Bawah (A vs B): $a% / ${100 - a}%"
+            setTextColor(Color.parseColor("#E2E8F0"))
+            textSize = 12.5f
+            typeface = Typeface.create("sans-serif-condensed", Typeface.BOLD)
+        }
+        val sbAB = SeekBar(this).apply {
+            max = 50 // 25..75%
+            progress = (prefs.splitRatioA - 25).coerceIn(0, 50)
+        }
+        sbAB.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(s: SeekBar?, p: Int, fromUser: Boolean) {
+                val a = p + 25
+                lblAB.text = "Proporsi Atas / Bawah (A vs B): $a% / ${100 - a}%"
+                if (fromUser) {
+                    prefs.splitRatioA = a
+                    applyInsets()
+                }
+            }
+            override fun onStartTrackingTouch(s: SeekBar?) {}
+            override fun onStopTrackingTouch(s: SeekBar?) {}
+        })
+
+        val applyBtn = modernSettingRow("Terapkan & Sesuaikan Jendela Split", "TERAPKAN", 1) {
+            dlgRef?.dismiss()
+            applyInsets()
+            if (panelsActive) startPanels()
+            toast("Ukuran area diterapkan (${prefs.leftPercent}% · ${prefs.splitRatioA}/${100 - prefs.splitRatioA})")
+        }
+
         val box = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(dp(24), dp(16), dp(24), 0)
-            addView(label)
-            addView(sb)
+            setPadding(dp(14), dp(12), dp(14), dp(12))
+            addView(lblSpd)
+            addView(sbSpd, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { bottomMargin = dp(12) })
+            addView(lblAB)
+            addView(sbAB, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { bottomMargin = dp(14) })
+            addView(applyBtn)
         }
-        AlertDialog.Builder(this, DIALOG)
-            .setTitle("Lebar panel speedometer (25 sampai 60%)")
-            .setView(box)
-            .setPositiveButton("Simpan") { _, _ ->
-                prefs.leftPercent = sb.progress + 25
-                applyInsets()
-                showSettings()
-            }
-            .setNegativeButton("Batal", null)
-            .showLeft()
+        dlgRef = showModernCard("⊞ ATUR UKURAN SEMUA AREA", "Geser slider untuk atur besar-kecil secara langsung", box)
     }
 
     private fun systemInfo(): String = buildString {
@@ -1673,6 +1784,7 @@ class MainActivity : Activity() {
             "Minimalis"
         )
         private val NIGHT_MODE_NAMES = arrayOf("MATI", "AKTIF", "OTOMATIS")
+        private val ORIENT_NAMES = arrayOf("LANSKAP", "POTRET", "OTOMATIS")
         private val SPEED_LIMITS = intArrayOf(0, 80, 100, 120)
         private val GRAD_NAMES = arrayOf("Cyber Neon", "Aurora", "Plasma", "Sunset", "Lava GR", "Gold", "Ice", "Toxic")
         private val GRAD_COLORS = intArrayOf(

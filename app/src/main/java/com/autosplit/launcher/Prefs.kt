@@ -165,6 +165,31 @@ class Prefs(ctx: Context) {
         get() = sp.getFloat("rolloffset", 0f)
         set(v) = sp.edit().putFloat("rolloffset", v).apply()
 
+    /** 0 = Lanskap, 1 = Potret, 2 = Otomatis */
+    var orientation: Int
+        get() = sp.getInt("orient", 0)
+        set(v) = sp.edit().putInt("orient", v).apply()
+
+    /** false = Kiri (Lanskap) / Atas (Potret); true = Kanan (Lanskap) / Bawah (Potret) */
+    var speedoFlip: Boolean
+        get() = sp.getBoolean("speedoflip", false)
+        set(v) = sp.edit().putBoolean("speedoflip", v).apply()
+
+    /** Proporsi ukuran Panel A dibanding Panel B (25..75%, default 60%) */
+    var splitRatioA: Int
+        get() = sp.getInt("splitratioa", 60)
+        set(v) = sp.edit().putInt("splitratioa", v).apply()
+
+    /** True = sembunyikan bingkai slot agar Maps & YouTube bebas diseret/diubah ukuran manual */
+    var freeDragMode: Boolean
+        get() = sp.getBoolean("freedrag", false)
+        set(v) = sp.edit().putBoolean("freedrag", v).apply()
+
+    /** Mode Potret: true = Atas 2 (Speedo + Panel A) & Bawah 1 penuh (Panel B); false = 3 susun vertikal */
+    var portraitTop2: Boolean
+        get() = sp.getBoolean("portraittop2", true)
+        set(v) = sp.edit().putBoolean("portraittop2", v).apply()
+
     companion object {
         const val DEFAULT_A = "com.google.android.apps.maps"
         const val DEFAULT_B = "com.google.android.youtube"
