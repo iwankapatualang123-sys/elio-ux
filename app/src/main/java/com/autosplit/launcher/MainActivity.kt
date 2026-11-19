@@ -47,18 +47,22 @@ class MainActivity : Activity() {
     private lateinit var root: LinearLayout
     private lateinit var holder: FrameLayout
     private lateinit var gpsText: TextView
-    private lateinit var ramText: TextView
+    private lateinit var nightBtn: TextView
+    private lateinit var nightVeil: View
     private lateinit var indicator: StatusIndicator
     private lateinit var labelA: TextView
     private lateinit var labelB: TextView
     private lateinit var labelStart: TextView
     private lateinit var overlay: SlotOverlay
 
+    private val weather = WeatherHub()
     private var gauge: SpeedoView? = null
     private val eq = EqHub { gauge?.setBands(it) }
     private var eqWarned = false
     private var lowBatWarned = 100
     private var lowBatDialog: AlertDialog? = null
+    private var lastAlertRed = false
+    private var lastBeepMs = 0L
     private val animViews = ArrayList<View>()
     private var lastFrameNs = 0L
 
@@ -97,6 +101,8 @@ class MainActivity : Activity() {
         prefs = Prefs(this)
         Pal.accent = prefs.accent
         Pal.accent2 = prefs.accent2
+        Pal.frameStyle = prefs.frameStyle
+        Pal.alertRed = false
         hub = SensorHub(this)
         link = LinkHub(this)
         engine = PanelEngine(this, prefs)
@@ -242,22 +248,36 @@ class MainActivity : Activity() {
             gravity = Gravity.CENTER_VERTICAL
             background = glass()
             elevation = dp(6).toFloat()
-            setPadding(dp(16), dp(8), dp(16), dp(8))
+            setPadding(dp(10), dp(6), dp(10), dp(6))
         }
         animViews.add(status)
         val clock = TextClock(this).apply {
             format24Hour = "HH:mm"
             format12Hour = "HH:mm"
-            textSize = 20f
+            textSize = 19f
             setTextColor(Pal.accent)
             typeface = Typeface.create("sans-serif-condensed", Typeface.BOLD)
         }
-        gpsText = statusText(Gravity.CENTER)
-        ramText = statusText(Gravity.CENTER)
+        gpsText = statusText(Gravity.CENTER).apply {
+            textSize = 11.5f
+        }
+        nightBtn = TextView(this).apply {
+            text = "🌙"
+            textSize = 13f
+            gravity = Gravity.CENTER
+            setPadding(dp(7), dp(3), dp(7), dp(3))
+            isClickable = true
+            isFocusable = true
+            setOnClickListener {
+                prefs.nightMode = if (isNightActive()) 0 else 1
+                applyNightVisuals()
+                toast(if (isNightActive()) "Mode Malam Anti-Silau: AKTIF" else "Mode Malam: MATI")
+            }
+        }
         indicator = StatusIndicator(this)
-        status.addView(clock, LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT))
-        status.addView(gpsText, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.5f))
-        status.addView(ramText, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 0.8f))
+        status.addView(clock, LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { rightMargin = dp(6) })
+        status.addView(gpsText, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f).apply { rightMargin = dp(6) })
+        status.addView(nightBtn, LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { rightMargin = dp(6) })
         status.addView(indicator, LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT))
 
         holder = FrameLayout(this)
@@ -304,11 +324,19 @@ class MainActivity : Activity() {
         if (prefs.showTiles) root.addView(grid, LinearLayout.LayoutParams(full, wrap))
         root.addView(dock, LinearLayout.LayoutParams(full, wrap))
         overlay = SlotOverlay(this)
+        nightVeil = View(this).apply {
+            setBackgroundColor(Color.argb(54, 10, 6, 0))
+            visibility = View.GONE
+            isClickable = false
+            isFocusable = false
+        }
         val frame = FrameLayout(this)
         frame.addView(root, FrameLayout.LayoutParams(full, full))
         frame.addView(overlay, FrameLayout.LayoutParams(full, full))
+        frame.addView(nightVeil, FrameLayout.LayoutParams(full, full))
         setContentView(frame)
 
+        applyNightVisuals()
         setGauge()
     }
 
@@ -490,19 +518,32 @@ class MainActivity : Activity() {
         val mph = prefs.useMph
         val k = if (mph) 2.23694f else 3.6f
         val unitName = if (mph) "mph" else "km/j"
+        val spdKmh = hub.currentSpeedMps() * 3.6f
         gauge?.setSpeed(hub.currentSpeedMps() * k)
         gauge?.setG(hub.latG)
+
+        val overSpeed = prefs.speedLimit > 0 && spdKmh > prefs.speedLimit
+        val overheat = !hub.batteryTempC.isNaN() && hub.batteryTempC >= 43f
+        val alertNow = overSpeed || overheat
+        if (alertNow != lastAlertRed) {
+            lastAlertRed = alertNow
+            Pal.alertRed = alertNow
+            overlay.invalidate()
+            for (v in animViews) v.invalidate()
+        }
+        if (overSpeed) beepOverSpeed()
 
         tick++
         if (tick % 8 == 1) {
             hub.readBattery()
             checkBattery()
             link.poll()
+            weather.updateIfNeeded(hub.lastLat, hub.lastLon)
             applyInsets()
-            ramText.text = "RAM ${hub.ramFreeMb()} MB"
+            applyNightVisuals()
         }
         indicator.set(link.cellLevel, link.wifiLevel, hub.batteryPct, hub.charging, tick)
-        updateGpsWarning(hub.gpsStatus())
+        updateGpsWarning(hub.gpsStatus(), overheat)
 
         val h = if (!hub.headingDeg.isNaN()) hub.headingDeg else hub.gpsBearing
         tileValues[T_HEAD]?.text = if (h.isNaN()) "—" else "${h.roundToInt() % 360}° ${cardinal(h)}"
@@ -536,14 +577,48 @@ class MainActivity : Activity() {
         tileBoxes[T_LUX]?.visibility = if (hub.hasLight) View.VISIBLE else View.GONE
         tileValues[T_LUX]?.text = if (hub.lux < 0f) "—" else f("%.0f lx", hub.lux)
 
-        if (tick % 4 == 1) pushLive(h, alt)
+        if (tick % 4 == 1) pushLive(h, alt, overSpeed)
         autoBrightness()
+    }
+
+    private fun beepOverSpeed() {
+        val now = android.os.SystemClock.elapsedRealtime()
+        if (now - lastBeepMs < 12_000L) return
+        lastBeepMs = now
+        try {
+            val tg = android.media.ToneGenerator(android.media.AudioManager.STREAM_NOTIFICATION, 55)
+            tg.startTone(android.media.ToneGenerator.TONE_PROP_BEEP, 160)
+            handler.postDelayed({ try { tg.release() } catch (_: Exception) {} }, 260L)
+        } catch (_: Exception) {
+        }
+    }
+
+    private fun isNightActive(): Boolean = when (prefs.nightMode) {
+        1 -> true
+        2 -> {
+            val cal = java.util.Calendar.getInstance()
+            val h = cal.get(java.util.Calendar.HOUR_OF_DAY)
+            val m = cal.get(java.util.Calendar.MINUTE)
+            h >= 18 || h < 5 || (h == 5 && m < 30)
+        }
+        else -> false
+    }
+
+    private fun applyNightVisuals() {
+        val on = isNightActive()
+        nightVeil.visibility = if (on) View.VISIBLE else View.GONE
+        nightBtn.background = GradientDrawable().apply {
+            shape = GradientDrawable.RECTANGLE
+            cornerRadius = dp(7).toFloat()
+            setColor(if (on) Color.parseColor("#33F59E0B") else Color.parseColor("#18FFFFFF"))
+            setStroke(dp(1), if (on) Color.parseColor("#99FBBF24") else Color.parseColor("#33FFFFFF"))
+        }
     }
 
     private var lastGpsState = -1
 
-    /** Tampilkan peringatan jelas di kartu status atas jika tidak ada satelit yang konek. */
-    private fun updateGpsWarning(raw: String) {
+    /** Tampilkan peringatan jelas di kartu status atas jika suhu panas >= 43°C atau tidak ada satelit. */
+    private fun updateGpsWarning(raw: String, overheat: Boolean) {
         val fix = raw.startsWith("GPS ")
         val state: Int
         val displayText: String
@@ -552,30 +627,37 @@ class MainActivity : Activity() {
         val strokeColor: Int
 
         when {
+            overheat -> {
+                state = 3
+                displayText = "⚠ PANAS ${hub.batteryTempC.toInt()}°C"
+                fgColor = Color.parseColor("#FECACA")
+                bgColor = Color.parseColor("#44EF4444")
+                strokeColor = Color.parseColor("#CCEF4444")
+            }
             fix && hub.satsUsed > 0 -> {
                 state = 2
-                displayText = "● $raw"
+                displayText = "● GPS ${hub.satsUsed}/${hub.satsVisible}"
                 fgColor = Color.parseColor("#34D399")
                 bgColor = Color.parseColor("#1A10B981")
                 strokeColor = Color.parseColor("#5534D399")
             }
             !raw.startsWith("Mencari") && !fix -> {
                 state = 0
-                displayText = "⚠ GPS MATI / PERLU IZIN"
+                displayText = "⚠ GPS MATI / IZIN"
                 fgColor = Color.parseColor("#FCA5A5")
                 bgColor = Color.parseColor("#2EEF4444")
                 strokeColor = Color.parseColor("#88F87171")
             }
             hub.satsUsed == 0 && hub.satsVisible == 0 -> {
                 state = 0
-                displayText = "⚠ TIDAK ADA SATELIT (0/0)"
+                displayText = "⚠ NO SATELIT (0/0)"
                 fgColor = Color.parseColor("#FCA5A5")
                 bgColor = Color.parseColor("#2EEF4444")
                 strokeColor = Color.parseColor("#88F87171")
             }
             else -> {
                 state = 1
-                displayText = "⚠ MENCARI SATELIT (${hub.satsUsed}/${hub.satsVisible})"
+                displayText = "⚠ CARI SAT (${hub.satsUsed}/${hub.satsVisible})"
                 fgColor = Color.parseColor("#FDE68A")
                 bgColor = Color.parseColor("#2BF59E0B")
                 strokeColor = Color.parseColor("#88FBBF24")
@@ -587,7 +669,7 @@ class MainActivity : Activity() {
             lastGpsState = state
             gpsText.setTextColor(fgColor)
             gpsText.typeface = Typeface.create("sans-serif-condensed", Typeface.BOLD)
-            gpsText.setPadding(dp(8), dp(2), dp(8), dp(2))
+            gpsText.setPadding(dp(7), dp(2), dp(7), dp(2))
             gpsText.background = GradientDrawable().apply {
                 shape = GradientDrawable.RECTANGLE
                 cornerRadius = dp(8).toFloat()
@@ -597,12 +679,21 @@ class MainActivity : Activity() {
         }
     }
 
-    /** Data sensor untuk panel samping template speedometer. */
-    private fun pushLive(heading: Float, alt: Double) {
+    /** Data sensor, cuaca real-time, inclinometer & batas kecepatan untuk speedometer WebView. */
+    private fun pushLive(heading: Float, alt: Double, overSpeed: Boolean) {
         val g = gauge ?: return
         val fix = hub.gpsStatus().startsWith("GPS ")
         val dot = if (fix) "\uD83D\uDFE2" else "\uD83D\uDFE1"
         val t = hub.tripMovingSec.toLong()
+        val pitch = (hub.rawPitchDeg - prefs.pitchOffset).roundToInt()
+        val roll = (hub.rawRollDeg - prefs.rollOffset).roundToInt()
+        val pitchStr = if (pitch > 0) "+${pitch}°" else "${pitch}°"
+        val rollStr = when {
+            roll > 0 -> "${roll}°R"
+            roll < 0 -> "${-roll}°L"
+            else -> "0°"
+        }
+
         val o = org.json.JSONObject()
         o.put("trip", f("%.1f", hub.tripMeters / 1000.0))
         o.put("alt", if (alt.isNaN()) "--" else f("%.0f", alt))
@@ -618,6 +709,12 @@ class MainActivity : Activity() {
         o.put("time", f("%d:%02d:%02d", t / 3600, (t % 3600) / 60, t % 60))
         o.put("acc", if (hub.charging) "ACTIVE" else "OFF")
         o.put("bat", if (hub.batteryPct >= 0) hub.batteryPct.toString() else "--")
+        o.put("inc", "$pitchStr · $rollStr")
+        o.put("limit", prefs.speedLimit)
+        o.put("over", overSpeed)
+        o.put("wxTemp", if (weather.hasData) "${weather.tempC}°C" else "--°")
+        o.put("wxKind", weather.kind)
+        o.put("wxLbl", if (weather.hasData) weather.label else "Offline")
         g.live(o.toString())
     }
 
@@ -627,6 +724,10 @@ class MainActivity : Activity() {
     }
 
     private fun autoBrightness() {
+        if (isNightActive()) {
+            setBrightness(0.20f)
+            return
+        }
         if (!prefs.autoDim || hub.lux < 0f) {
             setBrightness(-1f)
             return
@@ -1104,6 +1205,48 @@ class MainActivity : Activity() {
         return "Kustom"
     }
 
+    private fun askFrameStyle() {
+        if (moving()) {
+            toast(LOCK_MSG)
+            return
+        }
+        val listBox = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(10), dp(8), dp(10), dp(10))
+        }
+        var dlgRef: AlertDialog? = null
+        val cur = prefs.frameStyle.coerceIn(0, FRAME_STYLE_NAMES.size - 1)
+        FRAME_STYLE_NAMES.forEachIndexed { idx, name ->
+            val active = idx == cur
+            listBox.addView(
+                modernSettingRow(name, if (active) "AKTIF" else "PILIH", if (active) 1 else 2) {
+                    dlgRef?.dismiss()
+                    prefs.frameStyle = idx
+                    Pal.frameStyle = idx
+                    overlay.invalidate()
+                    for (v in animViews) v.invalidate()
+                    toast("Bingkai: $name")
+                }
+            )
+        }
+        dlgRef = showModernCard("❖ GAYA BINGKAI LUXURY HD", "4 Pilihan Bingkai Modern", listBox)
+    }
+
+    private fun applyPreset(entertainment: Boolean, fullScreen: Boolean) {
+        if (fullScreen) {
+            panelsActive = false
+            applyInsets()
+            toast("Preset: Fokus Speedometer (Layar Penuh)")
+            return
+        }
+        prefs.panelCount = 3
+        prefs.entertainmentLayout = entertainment
+        updateSlotButtons()
+        applyInsets()
+        startPanels()
+        toast(if (entertainment) "Preset: Mode Hiburan (Video Besar)" else "Preset: Mode Navigasi (Peta Besar)")
+    }
+
     private fun showSettings() {
         if (moving()) {
             toast(LOCK_MSG)
@@ -1115,7 +1258,7 @@ class MainActivity : Activity() {
             setPadding(dp(10), dp(10), dp(10), dp(10))
         }
 
-        // 1. Baris Pintasan Cepat (Tukar Atas/Bawah, Tema, Layar Penuh)
+        // 1. Baris Preset & Pintasan Cepat 1-Ketukan (Tukar A/B, Navigasi, Hiburan, Fokus Speedo)
         val quickRow = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
         }
@@ -1123,18 +1266,21 @@ class MainActivity : Activity() {
             dlgRef?.dismiss()
             swapPanels()
         }
-        val btnTheme = modernQuickBtn("❖", "Tema", false) {
+        val btnNav = modernQuickBtn("🗺", "Navigasi", !prefs.entertainmentLayout && panelsActive) {
             dlgRef?.dismiss()
-            askStyle()
+            applyPreset(entertainment = false, fullScreen = false)
         }
-        val btnFull = modernQuickBtn("⛶", "Layar Penuh", false) {
+        val btnEnt = modernQuickBtn("▶", "Hiburan", prefs.entertainmentLayout && panelsActive) {
             dlgRef?.dismiss()
-            panelsActive = false
-            applyInsets()
-            toast("Mode layar penuh aktif")
+            applyPreset(entertainment = true, fullScreen = false)
         }
-        quickRow.addView(btnSwap, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.15f).apply { rightMargin = dp(5) })
-        quickRow.addView(btnTheme, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 0.9f).apply { rightMargin = dp(5) })
+        val btnFull = modernQuickBtn("⛶", "Speedo", !panelsActive) {
+            dlgRef?.dismiss()
+            applyPreset(entertainment = false, fullScreen = true)
+        }
+        quickRow.addView(btnSwap, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.05f).apply { rightMargin = dp(4) })
+        quickRow.addView(btnNav, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f).apply { rightMargin = dp(4) })
+        quickRow.addView(btnEnt, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f).apply { rightMargin = dp(4) })
         quickRow.addView(btnFull, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 0.95f))
         container.addView(quickRow, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
             bottomMargin = dp(7)
@@ -1166,8 +1312,26 @@ class MainActivity : Activity() {
             })
         }
 
-        // Semua fitur pengaturan bawaan tetap 100% utuh
+        // Semua fitur baru + seluruh fitur pengaturan bawaan tetap 100% utuh
         addRow("Tema / Gaya Speedometer", STYLE_NAMES[prefs.gaugeStyle.coerceIn(0, STYLE_NAMES.size - 1)].substringBefore(" ("), 2) { askStyle() }
+        addRow("Gaya Bingkai Luxury HD", FRAME_STYLE_NAMES[prefs.frameStyle.coerceIn(0, FRAME_STYLE_NAMES.size - 1)], 2) { askFrameStyle() }
+        addRow("Mode Malam Anti-Silau", NIGHT_MODE_NAMES[prefs.nightMode.coerceIn(0, NIGHT_MODE_NAMES.size - 1)], if (isNightActive()) 1 else 0) {
+            prefs.nightMode = (prefs.nightMode + 1) % NIGHT_MODE_NAMES.size
+            applyNightVisuals()
+            autoBrightness()
+            showSettings()
+        }
+        val limLabel = if (prefs.speedLimit > 0) "${prefs.speedLimit} KM/J" else "MATI"
+        addRow("Batas Kecepatan (Speed Alert)", limLabel, if (prefs.speedLimit > 0) 2 else 0) {
+            val idx = SPEED_LIMITS.indexOf(prefs.speedLimit).let { if (it < 0) 0 else it }
+            prefs.speedLimit = SPEED_LIMITS[(idx + 1) % SPEED_LIMITS.size]
+            showSettings()
+        }
+        addRow("Kalibrasi 0° Inclinometer (Tanjakan)", "KALIBRASI", 2) {
+            prefs.pitchOffset = hub.rawPitchDeg
+            prefs.rollOffset = hub.rawRollDeg
+            toast("Inclinometer dikalibrasi ke 0° (jalan rata)")
+        }
         addRow("Mulai ${prefs.panelCount} Jendela Split (Auto-Resize)", "MULAI", 1) { startPanels() }
         addRow("Tukar Posisi Aplikasi Atas ⇅ Bawah", "TUKAR", 2) { swapPanels() }
         addRow("Pilih Aplikasi Panel Atas (A)", engine.labelOf(prefs.panelA), 2) { pickApp(true) }
@@ -1480,13 +1644,21 @@ class MainActivity : Activity() {
         private const val DIALOG = android.R.style.Theme_Material_Dialog_Alert
         private const val LOCK_MSG = "Dikunci saat mobil bergerak"
         private val STYLE_NAMES = arrayOf(
-            "Lexus F-Sport (Klasik)",
-            "BMW M3 (Klasik)",
-            "Mazda KODO (Klasik)",
-            "Honda Type R (Klasik)",
+            "Lexus F-Sport (HD)",
+            "BMW G-Series (iDrive 8 HD)",
+            "Mazda KODO (HD)",
+            "Honda Type R (HD)",
             "ELIO Neon (Innova Reborn)",
             "BMW M Sport (Innova Reborn)"
         )
+        private val FRAME_STYLE_NAMES = arrayOf(
+            "MBUX Titanium",
+            "Lexus Sapphire",
+            "BMW Precision",
+            "Minimalis"
+        )
+        private val NIGHT_MODE_NAMES = arrayOf("MATI", "AKTIF", "OTOMATIS")
+        private val SPEED_LIMITS = intArrayOf(0, 80, 100, 120)
         private val GRAD_NAMES = arrayOf("Cyber Neon", "Aurora", "Plasma", "Sunset", "Lava GR", "Gold", "Ice", "Toxic")
         private val GRAD_COLORS = intArrayOf(
             Color.parseColor("#00E5FF"), Color.parseColor("#A855F7"),

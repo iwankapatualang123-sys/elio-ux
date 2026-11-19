@@ -3,18 +3,18 @@ package com.autosplit.launcher
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.LinearGradient
 import android.graphics.Matrix
 import android.graphics.Paint
 import android.graphics.Rect
 import android.graphics.RectF
+import android.graphics.Shader
 import android.graphics.SweepGradient
-import android.graphics.Typeface
 import android.view.View
 
 /**
- * Bingkai tebal berwarna aksen: satu bingkai penuh di tepi layar, dan bingkai utuh di sekeliling
- * tiap jendela aplikasi beserta labelnya. Bingkai bisa Diam (warna tetap) atau Berjalan
- * (gradasi soft berputar mengikuti jam Ambient, seperti ambient light). Tidak menangkap sentuhan.
+ * Bingkai layar & jendela split bergaya Luxury HD (4 gaya mengikuti Pal.frameStyle).
+ * Strip label 22dp lama sudah dirapatkan menjadi 6dp agar Google Maps & YouTube jauh lebih luas.
  */
 class SlotOverlay(ctx: Context) : View(ctx) {
 
@@ -24,44 +24,29 @@ class SlotOverlay(ctx: Context) : View(ctx) {
     private val d = ctx.resources.displayMetrics.density
     private val loc = IntArray(2)
     private val box = RectF()
+    private val innerBox = RectF()
     private val rot = Matrix()
     private var sweep: SweepGradient? = null
+    private var sweepKey = 0L
+
+    private val thin = maxOf(1.1f, d * 1.15f)
+    private val mid = maxOf(1.7f, d * 1.8f)
 
     private val framePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
-        strokeWidth = maxOf(3.5f, d * 3.5f)
+        strokeWidth = thin
         strokeJoin = Paint.Join.ROUND
         strokeCap = Paint.Cap.ROUND
     }
-    private val screenPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+    private val accentBar = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
-        strokeWidth = maxOf(7f, d * 7f)
+        strokeWidth = mid
+        strokeCap = Paint.Cap.ROUND
+    }
+    private val bevelPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+        strokeWidth = thin
         strokeJoin = Paint.Join.ROUND
-    }
-    private val glowWide = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        style = Paint.Style.STROKE
-        strokeWidth = d * 22f
-        alpha = 38
-    }
-    private val glowMid = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        style = Paint.Style.STROKE
-        strokeWidth = d * 13f
-        alpha = 80
-    }
-    private val screenGloss = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        style = Paint.Style.STROKE
-        strokeWidth = maxOf(2.5f, d * 2.6f)
-        strokeJoin = Paint.Join.ROUND
-    }
-    private val frameGloss = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        style = Paint.Style.STROKE
-        strokeWidth = maxOf(1.5f, d * 1.4f)
-        strokeJoin = Paint.Join.ROUND
-    }
-    private val text = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        textSize = 11f * d
-        typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
-        letterSpacing = 0.12f
     }
 
     fun setSlots(list: List<Slot>) {
@@ -71,49 +56,100 @@ class SlotOverlay(ctx: Context) : View(ctx) {
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         sweep = null
-        val g = android.graphics.LinearGradient(
-            0f, 0f, 0f, h.toFloat(),
-            intArrayOf(Color.argb(230, 255, 255, 255), Color.argb(120, 255, 255, 255), Color.argb(70, 255, 255, 255)),
-            floatArrayOf(0f, 0.4f, 1f), android.graphics.Shader.TileMode.CLAMP
-        )
-        screenGloss.shader = g
-        frameGloss.shader = g
+    }
+
+    private fun getSweep(c1: Int, c2: Int): SweepGradient? {
+        if (!Ambient.running) return null
+        val key = (c1.toLong() shl 32) or (c2.toLong() and 0xFFFFFFFFL)
+        val sg = sweep?.takeIf { sweepKey == key } ?: SweepGradient(
+            width / 2f, height / 2f, Ambient.loopColors(c1, c2), null
+        ).also {
+            sweep = it
+            sweepKey = key
+        }
+        rot.setRotate(Ambient.angle(), width / 2f, height / 2f)
+        sg.setLocalMatrix(rot)
+        return sg
+    }
+
+    private fun drawLuxuryRect(c: Canvas, r: RectF, radius: Float, c1: Int, c2: Int, sg: SweepGradient?) {
+        when (Pal.frameStyle) {
+            0 -> { // MBUX Titanium + Ambient Light-Bar
+                framePaint.shader = null
+                framePaint.strokeWidth = thin
+                framePaint.color = if (Pal.alertRed) Color.argb(170, 248, 113, 113) else Color.argb(56, 255, 255, 255)
+                c.drawRoundRect(r, radius, radius, framePaint)
+
+                val insetX = r.width() * 0.12f
+                accentBar.strokeWidth = mid
+                accentBar.shader = sg ?: LinearGradient(
+                    r.left + insetX, r.top, r.right - insetX, r.top,
+                    intArrayOf(Color.TRANSPARENT, c1, c2, Color.TRANSPARENT),
+                    floatArrayOf(0f, 0.3f, 0.7f, 1f), Shader.TileMode.CLAMP
+                )
+                c.drawLine(r.left + insetX, r.top, r.right - insetX, r.top, accentBar)
+            }
+            1 -> { // Lexus Sapphire Double-Bezel
+                framePaint.strokeWidth = thin
+                framePaint.shader = sg ?: LinearGradient(
+                    r.left, r.top, r.right, r.bottom,
+                    intArrayOf(
+                        Color.argb(135, 255, 255, 255),
+                        Color.argb(165, Color.red(c1), Color.green(c1), Color.blue(c1)),
+                        Color.argb(35, 255, 255, 255),
+                        Color.argb(165, Color.red(c2), Color.green(c2), Color.blue(c2))
+                    ),
+                    floatArrayOf(0f, 0.28f, 0.65f, 1f), Shader.TileMode.CLAMP
+                )
+                c.drawRoundRect(r, radius, radius, framePaint)
+                innerBox.set(r.left + thin * 1.5f, r.top + thin * 1.5f, r.right - thin * 1.5f, r.bottom - thin * 1.5f)
+                bevelPaint.color = Color.argb(36, 255, 255, 255)
+                c.drawRoundRect(innerBox, (radius - thin).coerceAtLeast(2f), (radius - thin).coerceAtLeast(2f), bevelPaint)
+            }
+            2 -> { // BMW Precision Carbon + Siku HD
+                framePaint.shader = null
+                framePaint.strokeWidth = thin
+                framePaint.color = Color.argb(50, 148, 163, 184)
+                c.drawRoundRect(r, radius, radius, framePaint)
+
+                val arm = minOf(d * 18f, r.width() * 0.16f, r.height() * 0.22f)
+                accentBar.strokeWidth = mid
+                accentBar.shader = sg
+                accentBar.color = c1
+                c.drawLine(r.left + radius * 0.3f, r.top, r.left + radius * 0.3f + arm, r.top, accentBar)
+                c.drawLine(r.left, r.top + radius * 0.3f, r.left, r.top + radius * 0.3f + arm, accentBar)
+                c.drawLine(r.right - radius * 0.3f - arm, r.bottom, r.right - radius * 0.3f, r.bottom, accentBar)
+                c.drawLine(r.right, r.bottom - radius * 0.3f - arm, r.right, r.bottom - radius * 0.3f, accentBar)
+                if (sg == null) accentBar.color = c2
+                c.drawLine(r.right - radius * 0.3f - arm, r.top, r.right - radius * 0.3f, r.top, accentBar)
+                c.drawLine(r.right, r.top + radius * 0.3f, r.right, r.top + radius * 0.3f + arm, accentBar)
+                c.drawLine(r.left + radius * 0.3f, r.bottom, r.left + radius * 0.3f + arm, r.bottom, accentBar)
+                c.drawLine(r.left, r.bottom - radius * 0.3f - arm, r.left, r.bottom - radius * 0.3f, accentBar)
+            }
+            else -> { // 3: Minimalis Ambient Rim
+                framePaint.shader = null
+                framePaint.strokeWidth = thin
+                framePaint.color = if (Pal.alertRed) Color.argb(150, 248, 113, 113) else Color.argb(38, 255, 255, 255)
+                c.drawRoundRect(r, radius, radius, framePaint)
+            }
+        }
     }
 
     override fun onDraw(c: Canvas) {
-        framePaint.color = Pal.accent
-        text.color = Pal.accent
+        val c1 = if (Pal.alertRed) Color.parseColor("#EF4444") else Pal.accent
+        val c2 = if (Pal.alertRed) Color.parseColor("#F97316") else Pal.accent2
+        val sg = getSweep(c1, c2)
 
-        val sw = screenPaint.strokeWidth
-        box.set(sw / 2f + d, sw / 2f + d, width - sw / 2f - d, height - sw / 2f - d)
-        val radius = 20f * d
-        val sg: SweepGradient? = if (Ambient.running) (sweep ?: SweepGradient(
-                width / 2f, height / 2f,
-                Ambient.loopColors(Pal.accent, Pal.accent2),
-                null
-            ).also { sweep = it }) else null
-        if (sg != null) {
-            rot.setRotate(Ambient.angle(), width / 2f, height / 2f)
-            sg.setLocalMatrix(rot)
-            screenPaint.shader = sg
-            if (!Ambient.lite) {
-                glowWide.shader = sg
-                glowMid.shader = sg
-                c.drawRoundRect(box, radius, radius, glowWide)
-                c.drawRoundRect(box, radius, radius, glowMid)
-            }
-        } else {
-            screenPaint.shader = null
-            screenPaint.color = Pal.accent
-        }
-        c.drawRoundRect(box, radius, radius, screenPaint)
-        c.drawRoundRect(box, radius, radius, screenGloss)
+        // Subtle Luxury Outer Screen Frame
+        val inset = d * 3f
+        box.set(inset, inset, width - inset, height - inset)
+        drawLuxuryRect(c, box, 16f * d, c1, c2, sg)
 
         if (slots.isEmpty()) return
         getLocationOnScreen(loc)
         val pad = PAD_DP * d
         val strip = STRIP_DP * d
-        val r = 14f * d
+        val r = 12f * d
         for (s in slots) {
             if (s.frame) {
                 box.set(
@@ -122,16 +158,13 @@ class SlotOverlay(ctx: Context) : View(ctx) {
                     s.rect.right - loc[0] + pad,
                     s.rect.bottom - loc[1] + pad
                 )
-                if (sg != null) framePaint.shader = sg else { framePaint.shader = null; framePaint.color = Pal.accent }
-                c.drawRoundRect(box, r, r, framePaint)
-                c.drawRoundRect(box, r, r, frameGloss)
+                drawLuxuryRect(c, box, r, c1, c2, sg)
             }
-            c.drawText(s.label, s.rect.left - loc[0] + pad, s.rect.top - loc[1] - strip * 0.3f, text)
         }
     }
 
     companion object {
-        const val PAD_DP = 6f
-        const val STRIP_DP = 22f
+        const val PAD_DP = 4f
+        const val STRIP_DP = 6f
     }
 }

@@ -52,6 +52,10 @@ class SensorHub(private val ctx: Context) : SensorEventListener, LocationListene
         private set
     var altitudeM = Double.NaN
         private set
+    var lastLat = Double.NaN
+        private set
+    var lastLon = Double.NaN
+        private set
     var gpsBearing = Float.NaN
         private set
     var satsUsed = 0
@@ -82,6 +86,10 @@ class SensorHub(private val ctx: Context) : SensorEventListener, LocationListene
     var latG = 0f
         private set
     var longG = 0f
+        private set
+    var rawPitchDeg = 0f
+        private set
+    var rawRollDeg = 0f
         private set
     var pressureHpa = Float.NaN
         private set
@@ -256,6 +264,8 @@ class SensorHub(private val ctx: Context) : SensorEventListener, LocationListene
         if (prev != null && loc.time <= prev.time) return
         accuracyM = if (loc.hasAccuracy()) loc.accuracy else -1f
         altitudeM = if (loc.hasAltitude()) loc.altitude else Double.NaN
+        lastLat = loc.latitude
+        lastLon = loc.longitude
 
         var v = if (loc.hasSpeed()) loc.speed else -1f
         var dist = 0f
@@ -307,9 +317,10 @@ class SensorHub(private val ctx: Context) : SensorEventListener, LocationListene
             Sensor.TYPE_ACCELEROMETER -> {
                 acc[0] = e.values[0]; acc[1] = e.values[1]; acc[2] = e.values[2]
                 hasAccSample = true
+                val a = 0.9f
+                for (i in 0..2) gravity[i] = a * gravity[i] + (1f - a) * e.values[i]
+                updateInclinometer(gravity[0], gravity[1], gravity[2])
                 if (!hasLinear) {
-                    val a = 0.9f
-                    for (i in 0..2) gravity[i] = a * gravity[i] + (1f - a) * e.values[i]
                     val lx = e.values[0] - gravity[0]
                     val ly = e.values[1] - gravity[1]
                     val lz = e.values[2] - gravity[2]
@@ -336,6 +347,23 @@ class SensorHub(private val ctx: Context) : SensorEventListener, LocationListene
             Sensor.TYPE_PRESSURE -> pressureHpa = e.values[0]
             Sensor.TYPE_AMBIENT_TEMPERATURE -> cabinTempC = e.values[0]
         }
+    }
+
+    /** Sudut tanjakan (pitch) & kemiringan bodi (roll) dari vektor gravitasi akselerometer. */
+    @Suppress("DEPRECATION")
+    private fun updateInclinometer(gx: Float, gy: Float, gz: Float) {
+        val sx: Float
+        val sy: Float
+        when (wm.defaultDisplay.rotation) {
+            Surface.ROTATION_90 -> { sx = gy; sy = -gx }
+            Surface.ROTATION_180 -> { sx = -gx; sy = -gy }
+            Surface.ROTATION_270 -> { sx = -gy; sy = gx }
+            else -> { sx = gx; sy = gy }
+        }
+        val roll = Math.toDegrees(atan2(sx.toDouble(), sqrt((sy * sy + gz * gz).toDouble()))).toFloat()
+        val pitch = Math.toDegrees(atan2(gz.toDouble(), sqrt((sx * sx + sy * sy).toDouble()))).toFloat()
+        rawRollDeg = rawRollDeg * 0.85f + roll * 0.15f
+        rawPitchDeg = rawPitchDeg * 0.85f + pitch * 0.15f
     }
 
     /**

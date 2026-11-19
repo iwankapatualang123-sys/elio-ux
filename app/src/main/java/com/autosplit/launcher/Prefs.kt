@@ -8,6 +8,10 @@ object Pal {
     /** Warna aksen yang dipilih pengguna; diisi dari Prefs saat aplikasi dibuka. */
     var accent: Int = Color.parseColor("#00E5FF")
     var accent2: Int = Color.parseColor("#A855F7")
+    /** 0 = MBUX Titanium, 1 = Lexus Sapphire, 2 = BMW Precision, 3 = Minimalis */
+    var frameStyle: Int = 0
+    /** True saat kecepatan melebihi batas atau suhu tablet >= 43°C. */
+    var alertRed: Boolean = false
 
     val BG = Color.parseColor("#05070D")
     val CYAN: Int get() = accent
@@ -137,6 +141,29 @@ class Prefs(ctx: Context) {
     var autoStartPanels: Boolean
         get() = sp.getBoolean("autopanels", true)
         set(v) = sp.edit().putBoolean("autopanels", v).apply()
+
+    /** 0 = MBUX Titanium, 1 = Lexus Sapphire, 2 = BMW Precision, 3 = Minimalis */
+    var frameStyle: Int
+        get() = sp.getInt("framestyle", 0)
+        set(v) = sp.edit().putInt("framestyle", v).apply()
+
+    /** 0 = Mati, 1 = Aktif, 2 = Otomatis (18:00-05:30) */
+    var nightMode: Int
+        get() = sp.getInt("nightmode", 2)
+        set(v) = sp.edit().putInt("nightmode", v).apply()
+
+    /** Batas kecepatan (km/j): 0 = Mati, 80, 100, 120 */
+    var speedLimit: Int
+        get() = sp.getInt("speedlimit", 100)
+        set(v) = sp.edit().putInt("speedlimit", v).apply()
+
+    var pitchOffset: Float
+        get() = sp.getFloat("pitchoffset", 0f)
+        set(v) = sp.edit().putFloat("pitchoffset", v).apply()
+
+    var rollOffset: Float
+        get() = sp.getFloat("rolloffset", 0f)
+        set(v) = sp.edit().putFloat("rolloffset", v).apply()
 
     companion object {
         const val DEFAULT_A = "com.google.android.apps.maps"

@@ -142,21 +142,28 @@
     setAttr('lfaNeedle', 'transform', `rotate(${(-135 + r240 * 270).toFixed(1)} 140 126)`);
     setText('lfaGDisplay', gText);
 
-    // 1. BMW M3 Klasik HD — Wide rising luminous blue & red blades
+    // 1. BMW G-Series (iDrive 8 Live Cockpit) — Slanted rising luminous blue & red bars
     setText('speedDisplay', v);
-    const m3Lh = Math.round(r240 * 200);
-    const m3Rh = Math.round(rLoad * 200);
-    setAttr('m3LFill', 'y', 224 - m3Lh);
+    const m3Lh = Math.round(r240 * 160);
+    const m3Rh = Math.round(rLoad * 160);
+    setAttr('m3LFill', 'y', 204 - m3Lh);
     setAttr('m3LFill', 'height', m3Lh);
-    setAttr('m3LCap', 'y', 224 - m3Lh);
+    setAttr('m3LCap', 'y', 204 - m3Lh);
     setAttr('m3LCap', 'opacity', m3Lh > 2 ? '0.95' : '0');
-    setAttr('m3RFill', 'y', 224 - m3Rh);
+    setAttr('m3RFill', 'y', 204 - m3Rh);
     setAttr('m3RFill', 'height', m3Rh);
-    setAttr('m3RCap', 'y', 224 - m3Rh);
+    setAttr('m3RCap', 'y', 204 - m3Rh);
     setAttr('m3RCap', 'opacity', m3Rh > 2 ? '0.95' : '0');
-    setAttr('m3GDot', 'cx', Math.min(162, Math.max(118, Math.round(140 + g * 24))));
-    setAttr('m3GDot', 'cy', Math.min(208, Math.max(164, Math.round(186 - r240 * 18))));
+    setAttr('m3GDot', 'cx', Math.min(160, Math.max(120, Math.round(140 + g * 22))));
+    setAttr('m3GDot', 'cy', Math.min(216, Math.max(176, Math.round(196 - r240 * 16))));
     setText('gScoreDisplay', gText);
+
+    // High-G warning highlight (> 0.65G)
+    const highG = gAbs >= 0.65;
+    ['lfaGDisplay', 'gScoreDisplay', 'mazdaGDisplay', 'hondaGText', 'elioGDisplay', 'bmwMGDisplay'].forEach((id) => {
+      const el = $(id);
+      if (el) el.classList.toggle('as-high-g', highG);
+    });
 
     // 2. Mazda KODO HD
     setText('mazdaSpeedDisplay', v);
